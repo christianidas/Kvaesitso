@@ -1113,4 +1113,16 @@
     <string name="typo_preview_medium2">Preview</string>
     <string name="typo_preview_long">The quick brown fox\njumps over 1234790</string>
     <string name="preference_category_donate">Support the development</string>
+    <string name="create_folder_title">New folder</string>
+    <string name="edit_folder_title">Edit folder</string>
+    <string name="folder_name">Folder name</string>
+    <string name="folder_name_empty_error">Name cannot be empty</string>
+    <string name="folder_select_items">Select items</string>
+    <plurals name="folder_selected_items">
+        <item quantity="one">%1$d item selected</item>
+        <item quantity="other">%1$d items selected</item>
+    </plurals>
+    <string name="folder_icon_customicon">Icon</string>
+    <string name="folder_icon_emoji">Emoji</string>
+    <string name="menu_create_folder">Create folder</string>
 </resources>

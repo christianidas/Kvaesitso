@@ -16,6 +16,11 @@ fun LauncherBottomSheets() {
         tag = bottomSheetManager.editTagSheetShown.value,
         onDismiss = { bottomSheetManager.dismissEditTagSheet() }
     )
+    EditFolderSheet(
+        expanded = bottomSheetManager.editFolderSheetShown.value != null,
+        folderId = bottomSheetManager.editFolderSheetShown.value?.ifEmpty { null },
+        onDismiss = { bottomSheetManager.dismissEditFolderSheet() }
+    )
     FailedGestureSheet(
         bottomSheetManager.failedGestureSheetShown.value,
         onDismiss = { bottomSheetManager.dismissFailedGestureSheet() }

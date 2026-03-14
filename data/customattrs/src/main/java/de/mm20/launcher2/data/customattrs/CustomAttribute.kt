@@ -21,6 +21,9 @@ sealed interface CustomAttribute {
                     tagName = entity.value
                 )
                 CustomAttributeType.Icon.value -> CustomIcon.fromDatabaseEntity(entity)
+                CustomAttributeType.Folder.value -> CustomFolder(
+                    folderId = entity.value
+                )
                 else -> {
                     Log.e("MM20", "Invalid custom attribute type: ${entity.type}")
                     null
@@ -54,6 +57,18 @@ class CustomTag(
             key = key,
             type = CustomAttributeType.Tag.value,
             value = tagName,
+        )
+    }
+}
+
+class CustomFolder(
+    val folderId: String
+): CustomAttribute {
+    override fun toDatabaseEntity(key: String): CustomAttributeEntity {
+        return CustomAttributeEntity(
+            key = key,
+            type = CustomAttributeType.Folder.value,
+            value = folderId,
         )
     }
 }

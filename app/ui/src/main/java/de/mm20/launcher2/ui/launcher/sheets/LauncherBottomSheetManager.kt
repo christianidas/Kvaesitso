@@ -18,6 +18,7 @@ class LauncherBottomSheetManager(registryOwner: SavedStateRegistryOwner) :
     val editFavoritesSheetShown = mutableStateOf(false)
     val hiddenItemsSheetShown = mutableStateOf(false)
     val editTagSheetShown = mutableStateOf<String?>(null)
+    val editFolderSheetShown = mutableStateOf<String?>(null)
     val failedGestureSheetShown = mutableStateOf<FailedGesture?>(null)
 
     init {
@@ -32,6 +33,7 @@ class LauncherBottomSheetManager(registryOwner: SavedStateRegistryOwner) :
                 editFavoritesSheetShown.value = state?.getBoolean(FAVORITES) == true
                 hiddenItemsSheetShown.value = state?.getBoolean(HIDDEN) == true
                 editTagSheetShown.value = state?.getString(TAG)
+                editFolderSheetShown.value = state?.getString(FOLDER)
             }
         })
     }
@@ -41,6 +43,7 @@ class LauncherBottomSheetManager(registryOwner: SavedStateRegistryOwner) :
             FAVORITES to editFavoritesSheetShown.value,
             HIDDEN to hiddenItemsSheetShown.value,
             TAG to editTagSheetShown.value,
+            FOLDER to editFolderSheetShown.value,
         )
     }
 
@@ -76,6 +79,18 @@ class LauncherBottomSheetManager(registryOwner: SavedStateRegistryOwner) :
         editTagSheetShown.value = null
     }
 
+    fun showEditFolderSheet(folderId: String) {
+        editFolderSheetShown.value = folderId
+    }
+
+    fun showCreateFolderSheet() {
+        editFolderSheetShown.value = ""
+    }
+
+    fun dismissEditFolderSheet() {
+        editFolderSheetShown.value = null
+    }
+
     fun showFailedGestureSheet(gesture: Gesture, action: GestureAction) {
         failedGestureSheetShown.value = FailedGesture(gesture, action)
     }
@@ -88,6 +103,7 @@ class LauncherBottomSheetManager(registryOwner: SavedStateRegistryOwner) :
         private const val FAVORITES = "favorites"
         private const val HIDDEN = "hidden"
         private const val TAG = "tag"
+        private const val FOLDER = "folder"
         private const val WIDGETS = "widgets"
 
     }

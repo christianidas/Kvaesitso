@@ -47,6 +47,7 @@ include(":data:plugins")
 
 include(":services:accounts")
 include(":services:tags")
+include(":services:folders")
 include(":services:search")
 include(":services:badges")
 include(":services:icons")
