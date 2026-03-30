@@ -132,6 +132,7 @@ dependencies {
     implementation(project(":services:icons"))
     implementation(project(":services:music"))
     implementation(project(":services:tags"))
+    implementation(project(":services:folders"))
     implementation(project(":data:weather"))
     implementation(project(":data:calendar"))
     implementation(project(":services:search"))

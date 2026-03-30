@@ -49,6 +49,6 @@ interface BackupRestoreDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun importCustomAttributes(items: List<CustomAttributeEntity>)
 
-    @Query("DELETE FROM CustomAttributes WHERE (type = 'tag' OR type = 'label') AND NOT EXISTS(SELECT 1 FROM Searchable WHERE CustomAttributes.key = Searchable.key)")
+    @Query("DELETE FROM CustomAttributes WHERE (type = 'tag' OR type = 'label' OR type = 'folder') AND NOT EXISTS(SELECT 1 FROM Searchable WHERE CustomAttributes.key = Searchable.key)")
     suspend fun cleanUp(): Int
 }

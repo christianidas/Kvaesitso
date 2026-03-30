@@ -41,6 +41,13 @@ interface CustomAttributesRepository: Backupable {
 
     fun renameTag(oldName: String, newName: String): Job
     fun deleteTag(tag: String): Job
+
+    fun getItemsForFolder(folderId: String): Flow<List<SavableSearchable>>
+    fun setItemsForFolder(folderId: String, items: List<SavableSearchable>): Job
+    fun addItemToFolder(item: SavableSearchable, folderId: String)
+    fun removeItemFromFolder(item: SavableSearchable, folderId: String)
+    fun deleteFolder(folderId: String): Job
+
     suspend fun cleanupDatabase(): Int
 }
 
@@ -172,6 +179,45 @@ internal class CustomAttributesRepositoryImpl(
         val dao = appDatabase.customAttrsDao()
         return scope.launch {
             dao.deleteTag(tag)
+        }
+    }
+
+    override fun getItemsForFolder(folderId: String): Flow<List<SavableSearchable>> {
+        val dao = appDatabase.customAttrsDao()
+        return dao.getItemsInFolder(folderId).flatMapLatest {
+            searchableRepository.getByKeys(it)
+        }
+    }
+
+    override fun setItemsForFolder(folderId: String, items: List<SavableSearchable>): Job {
+        val dao = appDatabase.customAttrsDao()
+        return scope.launch {
+            dao.setItemsInFolder(folderId, items.map { it.key })
+            for (item in items) {
+                searchableRepository.insert(item)
+            }
+        }
+    }
+
+    override fun addItemToFolder(item: SavableSearchable, folderId: String) {
+        val dao = appDatabase.customAttrsDao()
+        scope.launch {
+            searchableRepository.insert(item)
+            dao.addItemToFolder(item.key, folderId)
+        }
+    }
+
+    override fun removeItemFromFolder(item: SavableSearchable, folderId: String) {
+        val dao = appDatabase.customAttrsDao()
+        scope.launch {
+            dao.removeItemFromFolder(item.key, folderId)
+        }
+    }
+
+    override fun deleteFolder(folderId: String): Job {
+        val dao = appDatabase.customAttrsDao()
+        return scope.launch {
+            dao.deleteFolder(folderId)
         }
     }
 

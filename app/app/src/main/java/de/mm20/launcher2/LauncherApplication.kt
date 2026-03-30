@@ -37,6 +37,7 @@ import de.mm20.launcher2.preferences.preferencesModule
 import de.mm20.launcher2.profiles.profilesModule
 import de.mm20.launcher2.searchactions.searchActionsModule
 import de.mm20.launcher2.services.favorites.favoritesModule
+import de.mm20.launcher2.services.folders.servicesFoldersModule
 import de.mm20.launcher2.services.tags.servicesTagsModule
 import de.mm20.launcher2.services.widgets.widgetsServiceModule
 import de.mm20.launcher2.themes.themesModule
@@ -91,6 +92,7 @@ class LauncherApplication : Application(), CoroutineScope, ImageLoaderFactory {
                     widgetsModule,
                     wikipediaModule,
                     locationsModule,
+                    servicesFoldersModule,
                     servicesTagsModule,
                     widgetsServiceModule,
                     dataPluginsModule,

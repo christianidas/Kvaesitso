@@ -144,6 +144,7 @@ dependencies {
     implementation(project(":core:preferences"))
     implementation(project(":services:search"))
     implementation(project(":services:tags"))
+    implementation(project(":services:folders"))
     implementation(project(":data:unitconverter"))
     implementation(project(":app:ui"))
     implementation(project(":data:weather"))

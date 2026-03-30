@@ -66,4 +66,31 @@ interface CustomAttrsDao {
     @Query("DELETE FROM CustomAttributes WHERE type = 'tag' AND value = :tag")
     suspend fun deleteTag(tag: String)
 
+    @Query("SELECT `key` FROM CustomAttributes WHERE type = 'folder' AND value = :folderId")
+    fun getItemsInFolder(folderId: String): Flow<List<String>>
+
+    @Transaction
+    suspend fun setItemsInFolder(folderId: String, items: List<String>) {
+        deleteFolder(folderId)
+        insertCustomAttributes(items.map { CustomAttributeEntity(it, "folder", folderId) })
+    }
+
+    @Transaction
+    suspend fun addItemToFolder(key: String, folderId: String) {
+        removeItemFromFolder(key, folderId)
+        insertFolderItem(key, folderId)
+    }
+
+    @Query("DELETE FROM CustomAttributes WHERE type = 'folder' AND `key` = :key AND value = :folderId")
+    suspend fun removeItemFromFolder(key: String, folderId: String)
+
+    @Query("INSERT INTO CustomAttributes (`key`, value, type) VALUES (:key, :folderId, 'folder')")
+    suspend fun insertFolderItem(key: String, folderId: String)
+
+    @Query("DELETE FROM CustomAttributes WHERE type = 'folder' AND value = :folderId")
+    suspend fun deleteFolder(folderId: String)
+
+    @Query("SELECT DISTINCT value FROM CustomAttributes WHERE type = 'folder' AND `key` = :key")
+    fun getFoldersForItem(key: String): Flow<List<String>>
+
 }

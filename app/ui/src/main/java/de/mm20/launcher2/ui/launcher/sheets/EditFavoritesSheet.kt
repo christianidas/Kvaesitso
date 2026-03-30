@@ -143,6 +143,7 @@ fun EditFavoritesSheet(
 fun ReorderFavoritesGrid(viewModel: EditFavoritesSheetVM, paddingValues: PaddingValues) {
     val items by viewModel.gridItems
     val columns = LocalGridSettings.current.columnCount
+    val bottomSheetManager = LocalBottomSheetManager.current
 
     val availableTags by viewModel.availableTags
     val pinnedTags by viewModel.pinnedTags
@@ -532,7 +533,7 @@ fun ReorderFavoritesGrid(viewModel: EditFavoritesSheetVM, paddingValues: Padding
                                         )
                                     ) {
                                         DropdownMenuItem(
-                                            shape = MenuDefaults.standaloneItemShape,
+                                            shape = MenuDefaults.leadingItemShape,
                                             leadingIcon = {
                                                 Icon(painterResource(R.drawable.add_24px), null)
                                             },
@@ -543,6 +544,21 @@ fun ReorderFavoritesGrid(viewModel: EditFavoritesSheetVM, paddingValues: Padding
                                             },
                                             onClick = {
                                                 createTag = true
+                                                showAddMenu = false
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            shape = MenuDefaults.trailingItemShape,
+                                            leadingIcon = {
+                                                Icon(painterResource(R.drawable.folder_24px), null)
+                                            },
+                                            text = {
+                                                Text(
+                                                    stringResource(R.string.menu_create_folder),
+                                                )
+                                            },
+                                            onClick = {
+                                                bottomSheetManager.showCreateFolderSheet()
                                                 showAddMenu = false
                                             }
                                         )
