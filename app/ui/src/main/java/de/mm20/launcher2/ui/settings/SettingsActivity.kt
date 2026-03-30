@@ -94,6 +94,8 @@ import de.mm20.launcher2.ui.settings.homescreen.HomescreenSettingsRoute
 import de.mm20.launcher2.ui.settings.homescreen.HomescreenSettingsScreen
 import de.mm20.launcher2.ui.settings.icons.IconsSettingsRoute
 import de.mm20.launcher2.ui.settings.icons.IconsSettingsScreen
+import de.mm20.launcher2.ui.settings.keywordshortcuts.KeywordShortcutsSettingsRoute
+import de.mm20.launcher2.ui.settings.keywordshortcuts.KeywordShortcutsSettingsScreen
 import de.mm20.launcher2.ui.settings.integrations.IntegrationsSettingsRoute
 import de.mm20.launcher2.ui.settings.integrations.IntegrationsSettingsScreen
 import de.mm20.launcher2.ui.settings.license.LicenseRoute
@@ -240,6 +242,9 @@ class SettingsActivity : BaseActivity() {
             }
             entry<SearchActionsSettingsRoute> {
                 SearchActionsSettingsScreen()
+            }
+            entry<KeywordShortcutsSettingsRoute> {
+                KeywordShortcutsSettingsScreen()
             }
             entry<HiddenItemsSettingsRoute> {
                 HiddenItemsSettingsScreen()
