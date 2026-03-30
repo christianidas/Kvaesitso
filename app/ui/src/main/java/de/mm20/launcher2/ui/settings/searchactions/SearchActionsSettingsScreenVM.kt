@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.mm20.launcher2.searchactions.SearchActionService
 import de.mm20.launcher2.searchactions.builders.CustomizableSearchActionBuilder
+import de.mm20.launcher2.searchactions.builders.KeywordShortcutBuilder
 import de.mm20.launcher2.searchactions.builders.SearchActionBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -19,6 +21,7 @@ class SearchActionsSettingsScreenVM : ViewModel(), KoinComponent {
 
     val searchActions = searchActionService
         .getSearchActionBuilders()
+        .map { it.filter { builder -> builder !is KeywordShortcutBuilder } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val disabledActions = searchActionService
