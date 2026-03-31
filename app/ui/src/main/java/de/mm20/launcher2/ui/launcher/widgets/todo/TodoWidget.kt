@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,6 +69,8 @@ fun TodoWidget(
         filtered.sortedBy { it.completed }
     }
 
+    var showRecurrenceEditor by rememberSaveable { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -96,7 +99,7 @@ fun TodoWidget(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 4.dp, end = 8.dp),
+                .padding(start = 4.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -138,8 +141,29 @@ fun TodoWidget(
                     innerTextField()
                 },
             )
+            IconButton(
+                onClick = { showRecurrenceEditor = true },
+                modifier = Modifier.size(36.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.repeat_24px),
+                    contentDescription = stringResource(R.string.todo_widget_add_recurring),
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
+
+    RecurrenceRuleEditorSheet(
+        expanded = showRecurrenceEditor,
+        rule = null,
+        onSave = { newRule ->
+            viewModel.addRecurrenceRule(newRule)
+            showRecurrenceEditor = false
+        },
+        onDismiss = { showRecurrenceEditor = false },
+    )
 }
 
 @Composable
