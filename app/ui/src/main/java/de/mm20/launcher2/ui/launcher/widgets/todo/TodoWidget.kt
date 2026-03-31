@@ -40,11 +40,6 @@ import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.widgets.TodoItem
 import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.Widget
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 @Composable
 fun TodoWidget(
@@ -69,8 +64,8 @@ fun TodoWidget(
     val showCompleted = widget.config.showCompleted
 
     val visibleItems = remember(allItems, showCompleted) {
-        if (showCompleted) allItems
-        else allItems.filter { !it.completed }
+        val filtered = if (showCompleted) allItems else allItems.filter { !it.completed }
+        filtered.sortedBy { it.completed }
     }
 
     Column(
@@ -153,11 +148,6 @@ private fun TodoItemRow(
     onToggle: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val isOverdue = remember(item.dueAt) {
-        item.dueAt != null && !item.completed &&
-                Instant.parse(item.dueAt).isBefore(Instant.now())
-    }
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -171,38 +161,21 @@ private fun TodoItemRow(
             modifier = Modifier.size(40.dp),
         )
 
-        Column(
+        Text(
+            text = item.text,
+            style = if (item.completed) {
+                MaterialTheme.typography.bodyMedium.copy(
+                    textDecoration = TextDecoration.LineThrough,
+                )
+            } else {
+                MaterialTheme.typography.bodyMedium
+            },
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .weight(1f)
                 .alpha(if (item.completed) 0.5f else 1f),
-        ) {
-            Text(
-                text = item.text,
-                style = if (item.completed) {
-                    MaterialTheme.typography.bodyMedium.copy(
-                        textDecoration = TextDecoration.LineThrough,
-                    )
-                } else {
-                    MaterialTheme.typography.bodyMedium
-                },
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-
-            if (item.dueAt != null) {
-                val formattedDue = remember(item.dueAt) {
-                    val instant = Instant.parse(item.dueAt)
-                    val zdt = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault())
-                    zdt.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT))
-                }
-                Text(
-                    text = formattedDue,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isOverdue) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+        )
 
         IconButton(
             onClick = onDelete,
