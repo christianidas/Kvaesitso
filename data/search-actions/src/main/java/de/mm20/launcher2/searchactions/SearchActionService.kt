@@ -14,6 +14,7 @@ import coil.size.Scale
 import de.mm20.launcher2.crashreporter.CrashReporter
 import de.mm20.launcher2.searchactions.actions.SearchAction
 import de.mm20.launcher2.searchactions.actions.SearchActionIcon
+import de.mm20.launcher2.searchactions.builders.KeywordShortcutBuilder
 import de.mm20.launcher2.searchactions.builders.SearchActionBuilder
 import de.mm20.launcher2.searchactions.builders.CustomWebsearchActionBuilder
 import io.ktor.client.HttpClient
@@ -70,8 +71,9 @@ internal class SearchActionServiceImpl(
 
         val builders = repository.getSearchActionBuilders()
 
-        return builders.map {
-            it.mapNotNull { it.build(context, classificationResult) }.toImmutableList()
+        return builders.map { builderList ->
+            val sorted = builderList.sortedBy { it !is KeywordShortcutBuilder }
+            sorted.mapNotNull { it.build(context, classificationResult) }.toImmutableList()
         }
     }
 

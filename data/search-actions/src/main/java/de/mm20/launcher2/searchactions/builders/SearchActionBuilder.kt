@@ -71,6 +71,34 @@ interface SearchActionBuilder {
                 "website" -> return OpenUrlActionBuilder(context)
                 "websearch" -> return WebsearchActionBuilder(context)
                 "share" -> return ShareActionBuilder(context)
+                "keyword" -> {
+                    val opts = options ?: return null
+                    val actionType = try {
+                        KeywordShortcutBuilder.ActionType.valueOf(opts.optString("actionType", "Sms"))
+                    } catch (_: IllegalArgumentException) {
+                        return null
+                    }
+                    val httpHeaders = opts.optJSONObject("httpHeaders")?.let { headersObj ->
+                        val map = mutableMapOf<String, String>()
+                        headersObj.keys().forEach { key -> map[key] = headersObj.optString(key) }
+                        map
+                    }
+                    return KeywordShortcutBuilder(
+                        label = entity.label ?: "",
+                        keyword = entity.data ?: return null,
+                        actionType = actionType,
+                        phoneNumber = opts.optString("phoneNumber").takeIf { it.isNotEmpty() },
+                        messageBody = opts.optString("messageBody").takeIf { it.isNotEmpty() },
+                        silentSms = opts.optBoolean("silentSms", false),
+                        url = opts.optString("url").takeIf { it.isNotEmpty() },
+                        httpMethod = opts.optString("httpMethod").takeIf { it.isNotEmpty() },
+                        httpBody = opts.optString("httpBody").takeIf { it.isNotEmpty() },
+                        httpHeaders = httpHeaders,
+                        icon = SearchActionIcon.fromInt(entity.icon),
+                        iconColor = entity.color ?: 0,
+                        customIcon = entity.customIcon,
+                    )
+                }
                 else -> return null
             }
         }
@@ -112,6 +140,32 @@ interface SearchActionBuilder {
                         "template" to builder.queryTemplate,
                     ).toString()
                 )
+                is KeywordShortcutBuilder -> {
+                    val headersJson = builder.httpHeaders?.let { headers ->
+                        val obj = JSONObject()
+                        headers.forEach { (k, v) -> obj.put(k, v) }
+                        obj
+                    }
+                    SearchActionEntity(
+                        position = position,
+                        type = "keyword",
+                        label = builder.label,
+                        data = builder.keyword,
+                        color = builder.iconColor,
+                        icon = builder.icon.toInt(),
+                        customIcon = builder.customIcon,
+                        options = jsonObjectOf(
+                            "actionType" to builder.actionType.name,
+                            "phoneNumber" to builder.phoneNumber,
+                            "messageBody" to builder.messageBody,
+                            "silentSms" to builder.silentSms,
+                            "url" to builder.url,
+                            "httpMethod" to builder.httpMethod,
+                            "httpBody" to builder.httpBody,
+                            "httpHeaders" to headersJson,
+                        ).toString()
+                    )
+                }
                 else -> SearchActionEntity(
                     position = position,
                     type = builder.key,

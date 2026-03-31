@@ -16,6 +16,7 @@ import de.mm20.launcher2.searchactions.SearchActionService
 import de.mm20.launcher2.searchactions.actions.SearchActionIcon
 import de.mm20.launcher2.searchactions.builders.AppSearchActionBuilder
 import de.mm20.launcher2.searchactions.builders.CustomIntentActionBuilder
+import de.mm20.launcher2.searchactions.builders.KeywordShortcutBuilder
 import de.mm20.launcher2.searchactions.builders.CustomWebsearchActionBuilder
 import de.mm20.launcher2.searchactions.builders.CustomizableSearchActionBuilder
 import kotlinx.coroutines.Dispatchers
@@ -102,6 +103,7 @@ class EditSearchActionSheetVM : ViewModel(), KoinComponent {
             is CustomIntentActionBuilder -> action.copy(label = label)
             is AppSearchActionBuilder -> action.copy(label = label)
             is CustomWebsearchActionBuilder -> action.copy(label = label)
+            is KeywordShortcutBuilder -> action.copy(label = label)
         }
 
         searchAction.value = newAction
@@ -122,6 +124,7 @@ class EditSearchActionSheetVM : ViewModel(), KoinComponent {
             }
 
             is CustomWebsearchActionBuilder -> action
+            is KeywordShortcutBuilder -> action
         }
 
         searchAction.value = newAction
@@ -234,6 +237,7 @@ class EditSearchActionSheetVM : ViewModel(), KoinComponent {
             )
 
             is AppSearchActionBuilder -> action.copy(icon = icon, customIcon = null, iconColor = 0)
+            is KeywordShortcutBuilder -> action.copy(icon = icon, customIcon = null, iconColor = 0)
         }
     }
 
@@ -260,6 +264,12 @@ class EditSearchActionSheetVM : ViewModel(), KoinComponent {
                 iconColor = 1,
                 icon = SearchActionIcon.Custom
             )
+
+            is KeywordShortcutBuilder -> action.copy(
+                customIcon = iconPath,
+                iconColor = 1,
+                icon = SearchActionIcon.Custom
+            )
         }
     }
 
@@ -279,6 +289,7 @@ class EditSearchActionSheetVM : ViewModel(), KoinComponent {
             is AppSearchActionBuilder -> EditSearchActionPage.CustomizeAppSearch
             is CustomWebsearchActionBuilder -> EditSearchActionPage.CustomizeWebSearch
             is CustomIntentActionBuilder -> EditSearchActionPage.CustomizeCustomIntent
+            is KeywordShortcutBuilder -> EditSearchActionPage.SelectType
             null -> EditSearchActionPage.SelectType
         }
     }
@@ -289,6 +300,7 @@ class EditSearchActionSheetVM : ViewModel(), KoinComponent {
             is CustomWebsearchActionBuilder -> action.copy(iconColor = color)
             is CustomIntentActionBuilder -> action.copy(iconColor = color)
             is AppSearchActionBuilder -> action.copy(iconColor = color)
+            is KeywordShortcutBuilder -> action.copy(iconColor = color)
         }
     }
 
