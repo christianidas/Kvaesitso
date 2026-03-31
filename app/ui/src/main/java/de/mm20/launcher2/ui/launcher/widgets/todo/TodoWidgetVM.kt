@@ -69,6 +69,12 @@ class TodoWidgetVM(
             var lastMaterialized = rule.lastMaterialized?.let { LocalDate.parse(it) }
             var materialized = 0
 
+            // Only materialize if there's no active (non-completed) item for this rule
+            val hasActiveItem = updatedItems.any {
+                it.recurrenceRuleId == rule.id && !it.completed
+            }
+            if (hasActiveItem) continue
+
             while (materialized < 3) {
                 val nextDue = computeNextDue(rule, lastMaterialized, now.zone) ?: break
                 if (nextDue.isAfter(now)) break
