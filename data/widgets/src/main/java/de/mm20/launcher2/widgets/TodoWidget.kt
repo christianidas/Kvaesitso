@@ -41,7 +41,6 @@ data class TodoWidgetConfig(
     val items: List<TodoItem> = emptyList(),
     val recurrenceRules: List<RecurrenceRule> = emptyList(),
     val showCompleted: Boolean = false,
-    val autoDeleteCompletedAfterHours: Int = 24,
 )
 
 data class TodoWidget(

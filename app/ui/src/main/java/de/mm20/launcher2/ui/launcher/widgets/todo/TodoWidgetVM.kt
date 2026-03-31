@@ -53,13 +53,15 @@ class TodoWidgetVM(
         var updatedRules = config.recurrenceRules.toMutableList()
         var changed = false
 
-        // Prune old completed items
-        val cutoff = now.minusHours(config.autoDeleteCompletedAfterHours.toLong())
-        val cutoffInstant = cutoff.toInstant().toString()
+        // Prune completed items from previous days
+        val today = now.toLocalDate()
         val beforeSize = updatedItems.size
         updatedItems.removeAll { item ->
-            val completedAt = item.completedAt
-            item.completed && completedAt != null && completedAt < cutoffInstant
+            if (!item.completed || item.completedAt == null) return@removeAll false
+            val completedDate = Instant.parse(item.completedAt)
+                .atZone(now.zone)
+                .toLocalDate()
+            completedDate.isBefore(today)
         }
         if (updatedItems.size != beforeSize) changed = true
 

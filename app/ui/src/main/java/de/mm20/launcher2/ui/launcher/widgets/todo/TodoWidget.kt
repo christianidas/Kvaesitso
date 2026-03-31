@@ -41,6 +41,9 @@ import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.widgets.TodoItem
 import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.Widget
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 @Composable
 fun TodoWidget(
@@ -65,7 +68,21 @@ fun TodoWidget(
     val showCompleted = widget.config.showCompleted
 
     val visibleItems = remember(allItems, showCompleted) {
-        val filtered = if (showCompleted) allItems else allItems.filter { !it.completed }
+        val filtered = if (showCompleted) {
+            val today = LocalDate.now()
+            allItems.filter { item ->
+                if (!item.completed) true
+                else {
+                    val completedAt = item.completedAt ?: return@filter false
+                    val completedDate = Instant.parse(completedAt)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                    completedDate == today
+                }
+            }
+        } else {
+            allItems.filter { !it.completed }
+        }
         filtered.sortedBy { it.completed }
     }
 
