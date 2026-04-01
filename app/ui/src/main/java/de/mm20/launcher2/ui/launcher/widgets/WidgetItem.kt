@@ -37,6 +37,7 @@ import de.mm20.launcher2.ui.launcher.widgets.external.AppWidget
 import de.mm20.launcher2.ui.launcher.widgets.favorites.AppsWidget
 import de.mm20.launcher2.ui.launcher.widgets.music.MusicWidget
 import de.mm20.launcher2.ui.launcher.widgets.notes.NotesWidget
+import de.mm20.launcher2.ui.launcher.widgets.smartsuggestions.SmartSuggestionsWidget
 import de.mm20.launcher2.ui.launcher.widgets.weather.WeatherWidget
 import de.mm20.launcher2.ui.theme.transparency.transparency
 import de.mm20.launcher2.widgets.AppWidget
@@ -44,6 +45,7 @@ import de.mm20.launcher2.widgets.CalendarWidget
 import de.mm20.launcher2.widgets.AppsWidget
 import de.mm20.launcher2.widgets.MusicWidget
 import de.mm20.launcher2.widgets.NotesWidget
+import de.mm20.launcher2.widgets.SmartSuggestionsWidget
 import de.mm20.launcher2.widgets.WeatherWidget
 import de.mm20.launcher2.widgets.Widget
 
@@ -108,6 +110,7 @@ fun WidgetItem(
                             is CalendarWidget -> stringResource(R.string.widget_name_calendar)
                             is AppsWidget -> stringResource(R.string.widget_name_apps)
                             is NotesWidget -> stringResource(R.string.widget_name_notes)
+                            is SmartSuggestionsWidget -> stringResource(R.string.widget_name_smart_suggestions)
                             is AppWidget -> remember(widget.config.widgetId) {
                                 appWidget?.loadLabel(
                                     context.packageManager
@@ -161,6 +164,10 @@ fun WidgetItem(
                             widget,
                             onWidgetAdd = onWidgetAdd,
                         )
+                    }
+
+                    is SmartSuggestionsWidget -> {
+                        SmartSuggestionsWidget(widget)
                     }
 
                     is AppWidget -> {
