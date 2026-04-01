@@ -70,6 +70,18 @@ sealed class Widget {
                             ?: SmartSuggestionsWidgetConfig()
                     SmartSuggestionsWidget(entity.id, config)
                 }
+                AppUsageWidget.Type -> {
+                    val config: AppUsageWidgetConfig =
+                        Json.decodeFromStringOrNull(entity.config?.takeIf { it.isNotBlank() })
+                            ?: AppUsageWidgetConfig()
+                    AppUsageWidget(entity.id, config)
+                }
+                TodoWidget.Type -> {
+                    val config: TodoWidgetConfig =
+                        Json.decodeFromStringOrNull(entity.config?.takeIf { it.isNotBlank() })
+                            ?: TodoWidgetConfig()
+                    TodoWidget(entity.id, config)
+                }
 
                 else -> null
             }

@@ -36,16 +36,20 @@ import de.mm20.launcher2.ui.launcher.widgets.calendar.CalendarWidget
 import de.mm20.launcher2.ui.launcher.widgets.external.AppWidget
 import de.mm20.launcher2.ui.launcher.widgets.favorites.AppsWidget
 import de.mm20.launcher2.ui.launcher.widgets.music.MusicWidget
+import de.mm20.launcher2.ui.launcher.widgets.appusage.AppUsageWidget
 import de.mm20.launcher2.ui.launcher.widgets.notes.NotesWidget
 import de.mm20.launcher2.ui.launcher.widgets.smartsuggestions.SmartSuggestionsWidget
+import de.mm20.launcher2.ui.launcher.widgets.todo.TodoWidget
 import de.mm20.launcher2.ui.launcher.widgets.weather.WeatherWidget
 import de.mm20.launcher2.ui.theme.transparency.transparency
 import de.mm20.launcher2.widgets.AppWidget
 import de.mm20.launcher2.widgets.CalendarWidget
 import de.mm20.launcher2.widgets.AppsWidget
 import de.mm20.launcher2.widgets.MusicWidget
+import de.mm20.launcher2.widgets.AppUsageWidget
 import de.mm20.launcher2.widgets.NotesWidget
 import de.mm20.launcher2.widgets.SmartSuggestionsWidget
+import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
 import de.mm20.launcher2.widgets.Widget
 
@@ -111,6 +115,8 @@ fun WidgetItem(
                             is AppsWidget -> stringResource(R.string.widget_name_apps)
                             is NotesWidget -> stringResource(R.string.widget_name_notes)
                             is SmartSuggestionsWidget -> stringResource(R.string.widget_name_smart_suggestions)
+                            is AppUsageWidget -> stringResource(R.string.widget_name_app_usage)
+                            is TodoWidget -> stringResource(R.string.widget_name_todo)
                             is AppWidget -> remember(widget.config.widgetId) {
                                 appWidget?.loadLabel(
                                     context.packageManager
@@ -168,6 +174,17 @@ fun WidgetItem(
 
                     is SmartSuggestionsWidget -> {
                         SmartSuggestionsWidget(widget)
+                    }
+
+                    is AppUsageWidget -> {
+                        AppUsageWidget(widget)
+                    }
+
+                    is TodoWidget -> {
+                        TodoWidget(
+                            widget,
+                            onWidgetUpdate = onWidgetUpdate,
+                        )
                     }
 
                     is AppWidget -> {
