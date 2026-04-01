@@ -60,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import de.mm20.launcher2.ui.R
 import de.mm20.launcher2.ui.component.DismissableBottomSheet
+import de.mm20.launcher2.widgets.AppUsageWidget
 import de.mm20.launcher2.widgets.AppWidget
 import de.mm20.launcher2.widgets.AppWidgetConfig
 import de.mm20.launcher2.widgets.AppsWidget
@@ -354,6 +355,7 @@ fun WidgetPickerSheet(
                                 MusicWidget.Type -> MusicWidget(id)
                                 AppsWidget.Type -> AppsWidget(id)
                                 NotesWidget.Type -> NotesWidget(id)
+                                AppUsageWidget.Type -> AppUsageWidget(id)
                                 TodoWidget.Type -> TodoWidget(id)
                                 else -> return@OutlinedCard
                             }
@@ -373,6 +375,7 @@ fun WidgetPickerSheet(
                                             MusicWidget.Type -> R.drawable.music_note_24px
                                             AppsWidget.Type -> R.drawable.apps_24px
                                             NotesWidget.Type -> R.drawable.sticky_note_2_24px
+                                            AppUsageWidget.Type -> R.drawable.timer_24px
                                             TodoWidget.Type -> R.drawable.checklist_24px
                                             else -> R.drawable.widgets_24px
                                         }

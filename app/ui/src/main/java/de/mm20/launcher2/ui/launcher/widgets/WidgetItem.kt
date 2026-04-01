@@ -36,6 +36,7 @@ import de.mm20.launcher2.ui.launcher.widgets.calendar.CalendarWidget
 import de.mm20.launcher2.ui.launcher.widgets.external.AppWidget
 import de.mm20.launcher2.ui.launcher.widgets.favorites.AppsWidget
 import de.mm20.launcher2.ui.launcher.widgets.music.MusicWidget
+import de.mm20.launcher2.ui.launcher.widgets.appusage.AppUsageWidget
 import de.mm20.launcher2.ui.launcher.widgets.notes.NotesWidget
 import de.mm20.launcher2.ui.launcher.widgets.todo.TodoWidget
 import de.mm20.launcher2.ui.launcher.widgets.weather.WeatherWidget
@@ -44,6 +45,7 @@ import de.mm20.launcher2.widgets.AppWidget
 import de.mm20.launcher2.widgets.CalendarWidget
 import de.mm20.launcher2.widgets.AppsWidget
 import de.mm20.launcher2.widgets.MusicWidget
+import de.mm20.launcher2.widgets.AppUsageWidget
 import de.mm20.launcher2.widgets.NotesWidget
 import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
@@ -110,6 +112,7 @@ fun WidgetItem(
                             is CalendarWidget -> stringResource(R.string.widget_name_calendar)
                             is AppsWidget -> stringResource(R.string.widget_name_apps)
                             is NotesWidget -> stringResource(R.string.widget_name_notes)
+                            is AppUsageWidget -> stringResource(R.string.widget_name_app_usage)
                             is TodoWidget -> stringResource(R.string.widget_name_todo)
                             is AppWidget -> remember(widget.config.widgetId) {
                                 appWidget?.loadLabel(
@@ -164,6 +167,10 @@ fun WidgetItem(
                             widget,
                             onWidgetAdd = onWidgetAdd,
                         )
+                    }
+
+                    is AppUsageWidget -> {
+                        AppUsageWidget(widget)
                     }
 
                     is TodoWidget -> {
