@@ -11,6 +11,7 @@ import de.mm20.launcher2.widgets.AppsWidget
 import de.mm20.launcher2.widgets.MusicWidget
 import de.mm20.launcher2.widgets.AppUsageWidget
 import de.mm20.launcher2.widgets.NotesWidget
+import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
 import de.mm20.launcher2.widgets.Widget
 import de.mm20.launcher2.widgets.WidgetRepository
@@ -74,6 +75,10 @@ class WidgetsService(
             BuiltInWidgetInfo(
                 type = AppUsageWidget.Type,
                 label = context.getString(R.string.widget_name_app_usage),
+            ),
+            BuiltInWidgetInfo(
+                type = TodoWidget.Type,
+                label = context.getString(R.string.widget_name_todo),
             ),
         )
     }

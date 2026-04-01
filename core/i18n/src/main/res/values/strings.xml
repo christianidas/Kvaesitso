@@ -227,6 +227,7 @@
     <string name="widget_name_apps">Apps</string>
     <string name="widget_name_notes">Note</string>
     <string name="widget_name_app_usage">Screen Time</string>
+    <string name="widget_name_todo">Todo</string>
     <string name="widget_name_unknown">Unknown</string>
     <string name="widget_add_widget">Add widget</string>
     <string name="widget_removed">Widget removed</string>
@@ -243,6 +244,23 @@
     <string name="app_usage_widget_no_data">No usage data available</string>
     <string name="app_usage_widget_grant_permission">Grant usage access</string>
     <string name="app_usage_widget_permission_required">Usage access permission is required to show screen time data.</string>
+    <string name="todo_widget_add_placeholder">Add a task…</string>
+    <string name="todo_widget_no_items">No tasks</string>
+    <string name="todo_widget_show_completed">Show completed tasks</string>
+    <string name="todo_widget_recurring_tasks">Recurring tasks</string>
+    <string name="todo_widget_add_recurring">Add recurring task</string>
+    <string name="todo_widget_interval_daily">Daily</string>
+    <string name="todo_widget_interval_weekly">Weekly</string>
+    <string name="todo_widget_interval_monthly">Monthly</string>
+    <string name="todo_widget_task_name">Task name</string>
+    <string name="todo_widget_every_n">Every %d</string>
+    <string name="todo_widget_days">days</string>
+    <string name="todo_widget_weeks">weeks</string>
+    <string name="todo_widget_months">months</string>
+    <string name="todo_widget_time_of_day">Time of day</string>
+    <string name="todo_widget_day_of_month">Day of month</string>
+    <string name="todo_widget_save">Save</string>
+    <string name="todo_widget_delete">Delete</string>
     <!-- Indicates to which app a shortcuts belongs. %1$s: the name of the app -->
     <string name="shortcut_summary">By %1$s</string>
     <!-- Close a dialog -->

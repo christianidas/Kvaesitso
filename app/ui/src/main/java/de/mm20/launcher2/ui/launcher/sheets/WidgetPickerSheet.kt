@@ -67,6 +67,7 @@ import de.mm20.launcher2.widgets.AppsWidget
 import de.mm20.launcher2.widgets.CalendarWidget
 import de.mm20.launcher2.widgets.MusicWidget
 import de.mm20.launcher2.widgets.NotesWidget
+import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
 import de.mm20.launcher2.widgets.Widget
 import java.util.UUID
@@ -355,6 +356,7 @@ fun WidgetPickerSheet(
                                 AppsWidget.Type -> AppsWidget(id)
                                 NotesWidget.Type -> NotesWidget(id)
                                 AppUsageWidget.Type -> AppUsageWidget(id)
+                                TodoWidget.Type -> TodoWidget(id)
                                 else -> return@OutlinedCard
                             }
                             onWidgetSelected(widget)
@@ -374,6 +376,7 @@ fun WidgetPickerSheet(
                                             AppsWidget.Type -> R.drawable.apps_24px
                                             NotesWidget.Type -> R.drawable.sticky_note_2_24px
                                             AppUsageWidget.Type -> R.drawable.timer_24px
+                                            TodoWidget.Type -> R.drawable.checklist_24px
                                             else -> R.drawable.widgets_24px
                                         }
                                     ),

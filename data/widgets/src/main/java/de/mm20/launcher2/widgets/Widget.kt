@@ -70,6 +70,12 @@ sealed class Widget {
                             ?: AppUsageWidgetConfig()
                     AppUsageWidget(entity.id, config)
                 }
+                TodoWidget.Type -> {
+                    val config: TodoWidgetConfig =
+                        Json.decodeFromStringOrNull(entity.config?.takeIf { it.isNotBlank() })
+                            ?: TodoWidgetConfig()
+                    TodoWidget(entity.id, config)
+                }
 
                 else -> null
             }

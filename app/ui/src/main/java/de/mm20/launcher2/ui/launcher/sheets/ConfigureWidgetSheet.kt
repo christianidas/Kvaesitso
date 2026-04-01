@@ -118,7 +118,10 @@ import de.mm20.launcher2.widgets.AppsWidget
 import de.mm20.launcher2.widgets.CalendarWidget
 import de.mm20.launcher2.widgets.MusicWidget
 import de.mm20.launcher2.widgets.NotesWidget
+import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
+import de.mm20.launcher2.ui.launcher.widgets.todo.RecurrenceRuleEditorSheet
+import de.mm20.launcher2.ui.launcher.widgets.todo.formatRecurrenceSchedule
 import de.mm20.launcher2.widgets.Widget
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.map
@@ -154,6 +157,7 @@ fun ConfigureWidgetSheet(
                 is MusicWidget -> ConfigureMusicWidget(widget, onWidgetUpdated)
                 is NotesWidget -> ConfigureNotesWidget(widget, onWidgetUpdated)
                 is AppUsageWidget -> {}
+                is TodoWidget -> ConfigureTodoWidget(widget, onWidgetUpdated)
             }
         }
 
@@ -667,6 +671,7 @@ fun ColumnScope.ConfigureAppWidget(
                     is AppsWidget -> it.copy(id = widget.id)
                     is NotesWidget -> it.copy(id = widget.id)
                     is AppUsageWidget -> it.copy(id = widget.id)
+                    is TodoWidget -> it.copy(id = widget.id)
                 }
                 onWidgetUpdated(updatedWidget)
                 replaceWidget = false
@@ -1075,6 +1080,117 @@ fun ConfigureNotesWidget(
             )
         }
     }
+}
+
+@Composable
+fun ColumnScope.ConfigureTodoWidget(
+    widget: TodoWidget,
+    onWidgetUpdated: (TodoWidget) -> Unit,
+) {
+    var editingRule by rememberSaveable { mutableStateOf<String?>(null) }
+    var showNewRuleEditor by rememberSaveable { mutableStateOf(false) }
+
+    // Display settings
+    OutlinedCard {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            SwitchPreference(
+                title = stringResource(R.string.todo_widget_show_completed),
+                value = widget.config.showCompleted,
+                onValueChanged = {
+                    onWidgetUpdated(
+                        widget.copy(
+                            config = widget.config.copy(showCompleted = it)
+                        )
+                    )
+                },
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Recurring tasks section
+    Text(
+        text = stringResource(R.string.todo_widget_recurring_tasks),
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.padding(bottom = 8.dp),
+    )
+
+    OutlinedCard {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            widget.config.recurrenceRules.forEach { rule ->
+                Preference(
+                    title = rule.templateText,
+                    summary = formatRecurrenceSchedule(rule),
+                    onClick = { editingRule = rule.id },
+                    controls = {
+                        IconButton(onClick = {
+                            onWidgetUpdated(
+                                widget.copy(
+                                    config = widget.config.copy(
+                                        recurrenceRules = widget.config.recurrenceRules.filter { it.id != rule.id },
+                                        items = widget.config.items.filter { it.recurrenceRuleId != rule.id },
+                                    )
+                                )
+                            )
+                        }) {
+                            Icon(
+                                painterResource(R.drawable.delete_24px),
+                                contentDescription = stringResource(R.string.todo_widget_delete),
+                            )
+                        }
+                    },
+                )
+            }
+            Preference(
+                title = stringResource(R.string.todo_widget_add_recurring),
+                icon = R.drawable.add_24px,
+                onClick = { showNewRuleEditor = true },
+            )
+        }
+    }
+
+    // Rule editor sheets
+    val ruleBeingEdited = editingRule?.let { id ->
+        widget.config.recurrenceRules.find { it.id == id }
+    }
+    RecurrenceRuleEditorSheet(
+        expanded = ruleBeingEdited != null,
+        rule = ruleBeingEdited,
+        onSave = { updatedRule ->
+            onWidgetUpdated(
+                widget.copy(
+                    config = widget.config.copy(
+                        recurrenceRules = widget.config.recurrenceRules.map {
+                            if (it.id == updatedRule.id) updatedRule else it
+                        }
+                    )
+                )
+            )
+            editingRule = null
+        },
+        onDismiss = { editingRule = null },
+    )
+
+    RecurrenceRuleEditorSheet(
+        expanded = showNewRuleEditor,
+        rule = null,
+        onSave = { newRule ->
+            onWidgetUpdated(
+                widget.copy(
+                    config = widget.config.copy(
+                        recurrenceRules = widget.config.recurrenceRules + newRule
+                    )
+                )
+            )
+            showNewRuleEditor = false
+        },
+        onDismiss = { showNewRuleEditor = false },
+    )
 }
 
 fun formatLinkedFileUri(uri: Uri?): String {
