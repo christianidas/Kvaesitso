@@ -64,6 +64,12 @@ sealed class Widget {
                             ?: NotesWidgetConfig()
                     NotesWidget(entity.id, config)
                 }
+                SmartSuggestionsWidget.Type -> {
+                    val config: SmartSuggestionsWidgetConfig =
+                        Json.decodeFromStringOrNull(entity.config?.takeIf { it.isNotBlank() })
+                            ?: SmartSuggestionsWidgetConfig()
+                    SmartSuggestionsWidget(entity.id, config)
+                }
                 AppUsageWidget.Type -> {
                     val config: AppUsageWidgetConfig =
                         Json.decodeFromStringOrNull(entity.config?.takeIf { it.isNotBlank() })
