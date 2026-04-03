@@ -93,14 +93,14 @@ internal class GoogleTasksProvider(
                     val lists = fetchTaskLists(token).filter { list ->
                         "$namespace:${list.id}" !in excludedCalendars
                     }
-                    val today = LocalDate.now()
+                    val maxDate = Instant.ofEpochMilli(to).atZone(ZoneId.systemDefault()).toLocalDate()
                     lists.flatMap { taskList ->
                         fetchTasks(token, taskList.id, taskList.title).filter { task ->
                             if (query != null && !task.label.contains(query, ignoreCase = true)) return@filter false
                             if (task.dueDate == null) return@filter true
                             // Compare as local dates — Google returns due as midnight UTC
                             // but "due April 3" means April 3 in the user's timezone
-                            task.dueDate <= today
+                            task.dueDate <= maxDate
                         }
                     }
                 } ?: emptyList()

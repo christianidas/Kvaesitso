@@ -267,6 +267,9 @@
     <string name="todo_widget_day_of_month">Day of month</string>
     <string name="todo_widget_save">Save</string>
     <string name="todo_widget_delete">Delete</string>
+    <string name="todo_widget_open_tasks">Open Tasks app</string>
+    <string name="todo_widget_create_task">Create new task</string>
+    <string name="todo_widget_title">Tasks</string>
     <!-- Indicates to which app a shortcuts belongs. %1$s: the name of the app -->
     <string name="shortcut_summary">By %1$s</string>
     <!-- Close a dialog -->
