@@ -12,16 +12,19 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
@@ -31,6 +34,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -249,10 +255,12 @@ fun TodoWidget(
                             if (index != 0) {
                                 HorizontalDivider()
                             }
-                            TaskRow(
+                            SwipeableTaskRow(
                                 task = task,
                                 onToggle = { viewModel.toggleTask(task) },
                                 onOpen = { task.launch(context, null) },
+                                onPostpone = { viewModel.postponeTask(task) },
+                                onDelete = { viewModel.deleteTask(task) },
                             )
                         }
                     }
@@ -328,6 +336,101 @@ private fun AddTaskRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeableTaskRow(
+    task: CalendarEvent,
+    onToggle: () -> Unit,
+    onOpen: () -> Unit,
+    onPostpone: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            when (value) {
+                SwipeToDismissBoxValue.StartToEnd -> {
+                    onPostpone()
+                    true
+                }
+                SwipeToDismissBoxValue.EndToStart -> {
+                    onDelete()
+                    true
+                }
+                SwipeToDismissBoxValue.Settled -> false
+            }
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            val direction = dismissState.dismissDirection
+            val color = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                else -> Color.Transparent
+            }
+            val iconColor = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.onPrimaryContainer
+                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.onErrorContainer
+                else -> Color.Transparent
+            }
+            val alignment = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
+                else -> Alignment.Center
+            }
+            val icon = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> R.drawable.chevron_forward_24px
+                SwipeToDismissBoxValue.EndToStart -> R.drawable.delete_24px
+                else -> R.drawable.chevron_forward_24px
+            }
+            val label = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> stringResource(R.string.todo_widget_postpone)
+                SwipeToDismissBoxValue.EndToStart -> stringResource(R.string.todo_widget_delete_task)
+                else -> ""
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color)
+                    .padding(horizontal = 16.dp),
+                contentAlignment = alignment,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (direction == SwipeToDismissBoxValue.EndToStart) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = iconColor,
+                            modifier = Modifier.padding(end = 8.dp),
+                        )
+                    }
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = label,
+                        tint = iconColor,
+                    )
+                    if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = iconColor,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                }
+            }
+        },
+    ) {
+        TaskRow(
+            task = task,
+            onToggle = onToggle,
+            onOpen = onOpen,
+        )
+    }
+}
+
 @Composable
 private fun TaskRow(
     task: CalendarEvent,
@@ -338,6 +441,7 @@ private fun TaskRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
             .clickable { onOpen() }
             .padding(start = 4.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

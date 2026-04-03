@@ -15,6 +15,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
+import io.ktor.client.request.delete
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -245,6 +246,39 @@ internal class GoogleTasksProvider(
             } catch (e: Exception) {
                 Log.e("GoogleTasksProvider", "Error fetching task", e)
                 null
+            }
+        }
+    }
+
+    suspend fun updateTaskDue(taskListId: String, taskId: String, dueDate: LocalDate) {
+        withContext(Dispatchers.IO) {
+            try {
+                withAuth { token ->
+                    val body = buildJsonObject {
+                        put("due", dueDate.atStartOfDay(ZoneId.of("UTC")).toInstant().toString())
+                    }
+                    httpClient.patch("$BASE_URL/lists/$taskListId/tasks/$taskId") {
+                        header(HttpHeaders.Authorization, "Bearer $token")
+                        contentType(ContentType.Application.Json)
+                        setBody(body)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GoogleTasksProvider", "Error updating task due date", e)
+            }
+        }
+    }
+
+    suspend fun deleteTask(taskListId: String, taskId: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                withAuth { token ->
+                    httpClient.delete("$BASE_URL/lists/$taskListId/tasks/$taskId") {
+                        header(HttpHeaders.Authorization, "Bearer $token")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GoogleTasksProvider", "Error deleting task", e)
             }
         }
     }

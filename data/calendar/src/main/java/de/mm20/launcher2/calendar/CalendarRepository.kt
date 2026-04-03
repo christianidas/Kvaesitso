@@ -45,6 +45,8 @@ interface CalendarRepository : SearchableRepository<CalendarEvent> {
 
     suspend fun completeTask(event: CalendarEvent, completed: Boolean)
     suspend fun createGoogleTask(title: String)
+    suspend fun postponeTask(event: CalendarEvent, toDate: java.time.LocalDate)
+    suspend fun deleteTask(event: CalendarEvent)
     fun isGoogleSignedIn(): Boolean
 }
 
@@ -223,6 +225,18 @@ internal class CalendarRepositoryImpl(
     override suspend fun completeTask(event: CalendarEvent, completed: Boolean) {
         if (event is GoogleTasksCalendarEvent) {
             GoogleTasksProvider(context, googleApiHelper).completeTask(event.taskListId, event.taskId, completed)
+        }
+    }
+
+    override suspend fun postponeTask(event: CalendarEvent, toDate: java.time.LocalDate) {
+        if (event is GoogleTasksCalendarEvent) {
+            GoogleTasksProvider(context, googleApiHelper).updateTaskDue(event.taskListId, event.taskId, toDate)
+        }
+    }
+
+    override suspend fun deleteTask(event: CalendarEvent) {
+        if (event is GoogleTasksCalendarEvent) {
+            GoogleTasksProvider(context, googleApiHelper).deleteTask(event.taskListId, event.taskId)
         }
     }
 

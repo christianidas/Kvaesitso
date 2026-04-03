@@ -156,6 +156,24 @@ class TodoWidgetVM : ViewModel(), KoinComponent {
         }
     }
 
+    fun postponeTask(event: CalendarEvent) {
+        // Optimistic UI removal
+        tasks.value = tasks.value.filter { it.key != event.key }
+        viewModelScope.launch {
+            calendarRepository.postponeTask(event, LocalDate.now().plusDays(1))
+            loadTasks()
+        }
+    }
+
+    fun deleteTask(event: CalendarEvent) {
+        // Optimistic UI removal
+        tasks.value = tasks.value.filter { it.key != event.key }
+        viewModelScope.launch {
+            calendarRepository.deleteTask(event)
+            loadTasks()
+        }
+    }
+
     fun signInGoogle(context: Context) {
         val intent = android.content.Intent(context, de.mm20.launcher2.google.GoogleLoginActivity::class.java)
         context.startActivity(intent)
