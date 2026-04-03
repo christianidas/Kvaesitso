@@ -153,6 +153,7 @@ dependencies {
     implementation(project(":core:permissions"))
     implementation(project(":data:websites"))
     implementation(project(":data:unitconverter"))
+    implementation(project(":libs:google"))
     implementation(project(":libs:nextcloud"))
     implementation(project(":libs:owncloud"))
     implementation(project(":services:accounts"))

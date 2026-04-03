@@ -4,8 +4,11 @@ import android.content.Context
 import de.mm20.launcher2.calendar.providers.AndroidCalendarProvider
 import de.mm20.launcher2.calendar.providers.CalendarList
 import de.mm20.launcher2.calendar.providers.CalendarProvider
+import de.mm20.launcher2.calendar.providers.GoogleTasksCalendarEvent
+import de.mm20.launcher2.calendar.providers.GoogleTasksProvider
 import de.mm20.launcher2.calendar.providers.PluginCalendarProvider
 import de.mm20.launcher2.calendar.providers.TasksCalendarProvider
+import de.mm20.launcher2.google.GoogleApiHelper
 import de.mm20.launcher2.permissions.PermissionGroup
 import de.mm20.launcher2.permissions.PermissionsManager
 import de.mm20.launcher2.plugin.PluginRepository
@@ -39,6 +42,10 @@ interface CalendarRepository : SearchableRepository<CalendarEvent> {
     ): Flow<ImmutableList<CalendarEvent>>
 
     fun getCalendars(providerId: String? = null): Flow<List<CalendarList>>
+
+    suspend fun completeTask(event: CalendarEvent, completed: Boolean)
+    suspend fun createGoogleTask(title: String)
+    fun isGoogleSignedIn(): Boolean
 }
 
 internal class CalendarRepositoryImpl(
@@ -47,6 +54,8 @@ internal class CalendarRepositoryImpl(
     private val pluginRepository: PluginRepository,
     private val settings: CalendarSearchSettings,
 ) : CalendarRepository {
+
+    private val googleApiHelper = GoogleApiHelper(context)
 
     override fun search(query: String, allowNetwork: Boolean): Flow<ImmutableList<CalendarEvent>> {
         if (query.isBlank() || query.length < 2) {
@@ -72,7 +81,7 @@ internal class CalendarRepositoryImpl(
                     "tasks.org" -> if (taskPerm) TasksCalendarProvider(context) else null
                     else -> PluginCalendarProvider(context, it)
                 }
-            }
+            } + if (googleApiHelper.isSignedIn()) listOf(GoogleTasksProvider(context, googleApiHelper)) else emptyList()
 
             val now = System.currentTimeMillis()
             emitAll(
@@ -103,13 +112,10 @@ internal class CalendarRepositoryImpl(
         )
         return combineTransform(hasCalendarPermission, hasTasksPermission, plugins) { calPerm, taskPerm, plugins ->
             val providers = buildList {
-                if (calPerm) add(AndroidCalendarProvider(context)) else null
-                if (taskPerm) add(TasksCalendarProvider(context)) else null
-                addAll(
-                    plugins.map {
-                        PluginCalendarProvider(context, it.authority)
-                    }
-                )
+                if (calPerm) add(AndroidCalendarProvider(context))
+                if (taskPerm) add(TasksCalendarProvider(context))
+                if (googleApiHelper.isSignedIn()) add(GoogleTasksProvider(context, googleApiHelper))
+                addAll(plugins.map { PluginCalendarProvider(context, it.authority) })
             }
 
             emitAll(
@@ -167,21 +173,14 @@ internal class CalendarRepositoryImpl(
         val providers: Flow<List<CalendarProvider>> = if (providerId != null) {
             when (providerId) {
                 "local" -> hasCalendarPermission.map {
-                    if (it) listOf(
-                        AndroidCalendarProvider(
-                            context
-                        )
-                    ) else emptyList()
+                    if (it) listOf(AndroidCalendarProvider(context)) else emptyList()
                 }
-
                 "tasks.org" -> hasTaskPermission.map { if (it) listOf(TasksCalendarProvider(context)) else emptyList() }
+                "google.tasks" -> hasCalendarPermission.map {
+                    if (googleApiHelper.isSignedIn()) listOf(GoogleTasksProvider(context, googleApiHelper)) else emptyList()
+                }
                 else -> pluginRepository.get(providerId).map {
-                    if (it?.enabled == true) listOf(
-                        PluginCalendarProvider(
-                            context,
-                            providerId
-                        )
-                    ) else emptyList()
+                    if (it?.enabled == true) listOf(PluginCalendarProvider(context, providerId)) else emptyList()
                 }
             }
         } else {
@@ -197,6 +196,7 @@ internal class CalendarRepositoryImpl(
                 buildList {
                     if (calPerm) add(AndroidCalendarProvider(context))
                     if (tasksPerm) add(TasksCalendarProvider(context))
+                    if (googleApiHelper.isSignedIn()) add(GoogleTasksProvider(context, googleApiHelper))
                     addAll(plugins.map { PluginCalendarProvider(context, it.authority) })
                 }
             }
@@ -214,7 +214,17 @@ internal class CalendarRepositoryImpl(
                 emitAll(result)
             }
         }
-
-
     }
+
+    override suspend fun createGoogleTask(title: String) {
+        GoogleTasksProvider(context, googleApiHelper).createTask("@default", title, null)
+    }
+
+    override suspend fun completeTask(event: CalendarEvent, completed: Boolean) {
+        if (event is GoogleTasksCalendarEvent) {
+            GoogleTasksProvider(context, googleApiHelper).completeTask(event.taskListId, event.taskId, completed)
+        }
+    }
+
+    override fun isGoogleSignedIn(): Boolean = googleApiHelper.isSignedIn()
 }

@@ -250,6 +250,8 @@
     <string name="app_usage_widget_permission_required">Usage access permission is required to show screen time data.</string>
     <string name="todo_widget_add_placeholder">Add a task…</string>
     <string name="todo_widget_no_items">No tasks</string>
+    <string name="todo_widget_sign_in_google">Sign in with Google to see your tasks</string>
+    <string name="todo_widget_sign_in_google_button">Sign in</string>
     <string name="todo_widget_show_completed">Show completed tasks</string>
     <string name="todo_widget_recurring_tasks">Recurring tasks</string>
     <string name="todo_widget_add_recurring">Add recurring task</string>

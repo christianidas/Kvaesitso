@@ -45,5 +45,6 @@ dependencies {
 
     implementation(project(":libs:owncloud"))
     implementation(project(":libs:nextcloud"))
+    implementation(project(":libs:google"))
 
 }

@@ -48,6 +48,9 @@ espressoCore = "3.6.1"
 
 osmOpeningHours = "0.4.0"
 material = "1.13.0"
+play-services-auth = "21.3.0"
+credentials = "1.5.0-rc01"
+googleid = "1.1.1"
 
 [libraries]
 mustache-compiler = { module = "com.github.spullara.mustache.java:compiler", version.ref = "mustache" }
@@ -137,6 +140,10 @@ osmopeninghours = { group = "de.westnordost", name = "osm-opening-hours", versio
 
 smartspacer = { group = "com.kieronquinn.smartspacer", name = "sdk-client", version = "1.1.2" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "play-services-auth" }
+credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
+credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
+googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 
 [bundles]
 kotlin = ["kotlin-stdlib", "kotlinx-coroutines-core", "kotlinx-coroutines-android", "kotlinx-collections-immutable", "kotlinx-serialization-json"]

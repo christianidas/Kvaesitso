@@ -8,10 +8,13 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import de.mm20.launcher2.calendar.providers.AndroidCalendarEvent
 import de.mm20.launcher2.calendar.providers.AndroidCalendarProvider
+import de.mm20.launcher2.calendar.providers.GoogleTasksCalendarEvent
+import de.mm20.launcher2.calendar.providers.GoogleTasksProvider
 import de.mm20.launcher2.calendar.providers.PluginCalendarEvent
 import de.mm20.launcher2.calendar.providers.PluginCalendarProvider
 import de.mm20.launcher2.calendar.providers.TasksCalendarEvent
 import de.mm20.launcher2.calendar.providers.TasksCalendarProvider
+import de.mm20.launcher2.google.GoogleApiHelper
 import de.mm20.launcher2.plugin.PluginRepository
 import de.mm20.launcher2.plugin.config.StorageStrategy
 import de.mm20.launcher2.search.SavableSearchable
@@ -89,6 +92,30 @@ internal data class SerializedCalendarEvent(
     val timestamp: Long = 0L,
     val strategy: StorageStrategy = StorageStrategy.StoreCopy,
 )
+
+class GoogleTasksCalendarEventSerializer : SearchableSerializer {
+    override fun serialize(searchable: SavableSearchable): String {
+        searchable as GoogleTasksCalendarEvent
+        val json = JSONObject()
+        json.put("taskId", searchable.taskId)
+        json.put("taskListId", searchable.taskListId)
+        return json.toString()
+    }
+
+    override val typePrefix: String
+        get() = GoogleTasksCalendarEvent.Domain
+}
+
+class GoogleTasksCalendarEventDeserializer(val context: Context) : SearchableDeserializer {
+    override suspend fun deserialize(serialized: String): SavableSearchable? {
+        val googleApiHelper = GoogleApiHelper(context)
+        if (!googleApiHelper.isSignedIn()) return null
+        val json = JSONObject(serialized)
+        val taskId = json.getString("taskId")
+        val taskListId = json.getString("taskListId")
+        return GoogleTasksProvider(context, googleApiHelper).getTask(taskListId, taskId)
+    }
+}
 
 class PluginCalendarEventSerializer: SearchableSerializer {
     override fun serialize(searchable: SavableSearchable): String {
