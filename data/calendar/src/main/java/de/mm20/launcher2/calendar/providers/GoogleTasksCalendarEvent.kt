@@ -15,6 +15,7 @@ data class GoogleTasksCalendarEvent(
     val taskId: String,
     val taskListId: String,
     val dueDate: LocalDate?,
+    val position: String? = null,
     override val color: Int?,
     override val startTime: Long?,
     override val endTime: Long,

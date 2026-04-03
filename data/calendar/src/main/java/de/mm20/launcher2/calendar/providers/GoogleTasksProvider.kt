@@ -46,6 +46,7 @@ internal data class GoogleTaskItem(
     val notes: String? = null,
     val status: String? = null,
     val due: String? = null,
+    val position: String? = null,
 )
 
 @Serializable
@@ -162,6 +163,7 @@ internal class GoogleTasksProvider(
                 taskId = item.id,
                 taskListId = listId,
                 dueDate = dueDate,
+                position = item.position,
                 color = null,
                 startTime = null,
                 endTime = dueMillis ?: (System.currentTimeMillis() + UNDATED_TASK_OFFSET_MS),
@@ -279,6 +281,27 @@ internal class GoogleTasksProvider(
                 }
             } catch (e: Exception) {
                 Log.e("GoogleTasksProvider", "Error deleting task", e)
+            }
+        }
+    }
+
+    /**
+     * Move a task to a new position within its list.
+     * @param previousTaskId The task ID to place after, or null to move to the top.
+     */
+    suspend fun moveTask(taskListId: String, taskId: String, previousTaskId: String?) {
+        withContext(Dispatchers.IO) {
+            try {
+                withAuth { token ->
+                    httpClient.post("$BASE_URL/lists/$taskListId/tasks/$taskId/move") {
+                        header(HttpHeaders.Authorization, "Bearer $token")
+                        if (previousTaskId != null) {
+                            parameter("previous", previousTaskId)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GoogleTasksProvider", "Error moving task", e)
             }
         }
     }

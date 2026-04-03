@@ -47,6 +47,7 @@ interface CalendarRepository : SearchableRepository<CalendarEvent> {
     suspend fun createGoogleTask(title: String)
     suspend fun postponeTask(event: CalendarEvent, toDate: java.time.LocalDate)
     suspend fun deleteTask(event: CalendarEvent)
+    suspend fun moveTask(event: CalendarEvent, previousEvent: CalendarEvent?)
     fun isGoogleSignedIn(): Boolean
 }
 
@@ -237,6 +238,13 @@ internal class CalendarRepositoryImpl(
     override suspend fun deleteTask(event: CalendarEvent) {
         if (event is GoogleTasksCalendarEvent) {
             GoogleTasksProvider(context, googleApiHelper).deleteTask(event.taskListId, event.taskId)
+        }
+    }
+
+    override suspend fun moveTask(event: CalendarEvent, previousEvent: CalendarEvent?) {
+        if (event is GoogleTasksCalendarEvent) {
+            val previousTaskId = (previousEvent as? GoogleTasksCalendarEvent)?.taskId
+            GoogleTasksProvider(context, googleApiHelper).moveTask(event.taskListId, event.taskId, previousTaskId)
         }
     }
 

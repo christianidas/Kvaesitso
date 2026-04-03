@@ -70,6 +70,13 @@ class TodoWidgetVM : ViewModel(), KoinComponent {
         }
     }
 
+    private fun sortTasks(list: List<CalendarEvent>): List<CalendarEvent> {
+        return list.sortedWith(
+            compareBy<CalendarEvent> { it.isCompleted == true }
+                .thenBy { (it as? GoogleTasksCalendarEvent)?.position ?: "" }
+        )
+    }
+
     private fun updateFilteredTasks() {
         val config = widgetConfig.value
         val date = selectedDate.value
@@ -91,11 +98,9 @@ class TodoWidgetVM : ViewModel(), KoinComponent {
         }.let { list ->
             if (config.showCompleted) list
             else list.filter { it.isCompleted != true }
-        }.sortedWith(
-            compareBy<CalendarEvent> { it.isCompleted == true }.thenBy { it.endTime }
-        )
+        }
 
-        tasks.value = filtered
+        tasks.value = sortTasks(filtered)
     }
 
     private fun loadTasks() {
@@ -149,12 +154,30 @@ class TodoWidgetVM : ViewModel(), KoinComponent {
         }.let { updated ->
             if (!config.showCompleted) updated.filter { it.isCompleted != true }
             else updated
-        }.sortedWith(
-            compareBy<CalendarEvent> { it.isCompleted == true }.thenBy { it.endTime }
-        )
+        }.let { sortTasks(it) }
         // Sync with API in background
         viewModelScope.launch {
             calendarRepository.completeTask(event, newCompleted)
+            loadTasks()
+        }
+    }
+
+    fun moveTask(fromKey: String, toKey: String) {
+        val currentList = tasks.value.toMutableList()
+        val fromIndex = currentList.indexOfFirst { it.key == fromKey }
+        val toIndex = currentList.indexOfFirst { it.key == toKey }
+        if (fromIndex < 0 || toIndex < 0) return
+
+        // Optimistic UI reorder
+        val item = currentList.removeAt(fromIndex)
+        currentList.add(toIndex, item)
+        tasks.value = currentList
+
+        // Sync with API — "previous" is the task just before the new position
+        val movedEvent = item
+        val previousEvent = if (toIndex > 0) currentList[toIndex - 1] else null
+        viewModelScope.launch {
+            calendarRepository.moveTask(movedEvent, previousEvent)
             loadTasks()
         }
     }
