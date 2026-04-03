@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.mm20.launcher2.calendar.CalendarRepository
+import de.mm20.launcher2.calendar.providers.GoogleTasksCalendarEvent
 import de.mm20.launcher2.search.CalendarEvent
 import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.TodoWidgetConfig
@@ -58,15 +59,31 @@ class TodoWidgetVM : ViewModel(), KoinComponent {
                 } else {
                     taskEvents.filter { it.isCompleted != true }
                 }
-                tasks.value = filtered.sortedBy { it.endTime }
+                tasks.value = filtered.sortedWith(
+                    compareBy<CalendarEvent> { it.isCompleted == true }.thenBy { it.endTime }
+                )
             }
         }
     }
 
     fun toggleTask(event: CalendarEvent) {
         val completed = event.isCompleted ?: return
+        val newCompleted = !completed
+        // Optimistic UI update
+        val config = widgetConfig.value
+        tasks.value = tasks.value.map {
+            if (it.key == event.key && it is GoogleTasksCalendarEvent) {
+                it.copy(isCompleted = newCompleted)
+            } else it
+        }.let { updated ->
+            if (!config.showCompleted) updated.filter { it.isCompleted != true }
+            else updated
+        }.sortedWith(
+            compareBy<CalendarEvent> { it.isCompleted == true }.thenBy { it.endTime }
+        )
+        // Sync with API in background
         viewModelScope.launch {
-            calendarRepository.completeTask(event, !completed)
+            calendarRepository.completeTask(event, newCompleted)
             loadTasks()
         }
     }

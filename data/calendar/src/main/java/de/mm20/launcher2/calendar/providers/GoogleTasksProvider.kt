@@ -145,7 +145,7 @@ internal class GoogleTasksProvider(
         val response = httpClient.get("$BASE_URL/lists/$listId/tasks") {
             header(HttpHeaders.Authorization, "Bearer $token")
             parameter("showCompleted", "true")
-            parameter("showHidden", "false")
+            parameter("showHidden", "true")
         }
         if (!response.status.isSuccess()) return emptyList()
         val items = response.body<GoogleTasksResponse>().items ?: return emptyList()
