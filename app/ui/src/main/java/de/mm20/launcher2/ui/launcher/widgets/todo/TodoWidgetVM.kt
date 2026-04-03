@@ -162,8 +162,10 @@ class TodoWidgetVM : ViewModel(), KoinComponent {
     fun postponeTask(event: CalendarEvent) {
         // Optimistic UI removal
         tasks.value = tasks.value.filter { it.key != event.key }
+        // Push to the day after the currently viewed date
+        val newDate = selectedDate.value.plusDays(1)
         viewModelScope.launch {
-            calendarRepository.postponeTask(event, LocalDate.now().plusDays(1))
+            calendarRepository.postponeTask(event, newDate)
             loadTasks()
         }
     }
