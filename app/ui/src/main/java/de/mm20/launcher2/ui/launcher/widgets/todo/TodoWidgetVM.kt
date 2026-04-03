@@ -76,9 +76,12 @@ class TodoWidgetVM : ViewModel(), KoinComponent {
         val today = LocalDate.now()
 
         val filtered = allTasks.filter { task ->
-            val taskDate = task.endTime.let {
-                Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
-            }
+            // Undated tasks always show on "Today"
+            val isUndated = task is GoogleTasksCalendarEvent && task.dueDate == null
+            if (isUndated) return@filter date == today
+
+            val taskDate = Instant.ofEpochMilli(task.endTime)
+                .atZone(ZoneId.systemDefault()).toLocalDate()
             if (date == today) {
                 // Today shows tasks due today or overdue
                 taskDate <= today
