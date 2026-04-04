@@ -136,6 +136,7 @@ dependencies {
     implementation(project(":services:icons"))
     implementation(project(":core:ktx"))
     implementation(project(":services:music"))
+    implementation(project(":libs:google"))
     implementation(project(":libs:nextcloud"))
     implementation(project(":data:notifications"))
     implementation(project(":libs:owncloud"))

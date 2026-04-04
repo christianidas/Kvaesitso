@@ -2,6 +2,7 @@ package de.mm20.launcher2.accounts
 
 import android.app.Activity
 import android.content.Context
+import de.mm20.launcher2.google.GoogleApiHelper
 import de.mm20.launcher2.nextcloud.NextcloudApiHelper
 import de.mm20.launcher2.owncloud.OwncloudClient
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,7 @@ internal class AccountsRepositoryImpl(
 ) : AccountsRepository {
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
+    private val googleApiHelper = GoogleApiHelper(context)
     private val nextcloudApiHelper = NextcloudApiHelper(context)
     private val owncloudApiHelper = OwncloudClient(context)
 
@@ -39,6 +41,8 @@ internal class AccountsRepositoryImpl(
                 scope.launch {
                     owncloudApiHelper.login(context, 0)
                 }
+            AccountType.Google ->
+                context.startActivity(googleApiHelper.getLoginIntent())
         }
     }
 
@@ -52,6 +56,9 @@ internal class AccountsRepositoryImpl(
             AccountType.Owncloud -> {
                 owncloudApiHelper.logout()
             }
+            AccountType.Google -> {
+                googleApiHelper.signOut()
+            }
         }
     }
 
@@ -59,17 +66,15 @@ internal class AccountsRepositoryImpl(
         return when (accountType) {
             AccountType.Nextcloud -> true
             AccountType.Owncloud -> true
+            AccountType.Google -> true
         }
     }
 
     override suspend fun getCurrentlySignedInAccount(accountType: AccountType): Account? {
         return when (accountType) {
-            AccountType.Nextcloud -> {
-                getNextcloudAccount()
-            }
-            AccountType.Owncloud -> {
-                getOwncloudAccount()
-            }
+            AccountType.Nextcloud -> getNextcloudAccount()
+            AccountType.Owncloud -> getOwncloudAccount()
+            AccountType.Google -> getGoogleAccount()
         }
     }
 
@@ -83,6 +88,11 @@ internal class AccountsRepositoryImpl(
         return owncloudApiHelper.getLoggedInUser()?.let {
             Account(it.displayName, AccountType.Owncloud)
         }
+    }
+
+    private fun getGoogleAccount(): Account? {
+        val email = googleApiHelper.getAccountEmail() ?: return null
+        return Account(email, AccountType.Google)
     }
 
 }

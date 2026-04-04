@@ -121,8 +121,6 @@ import de.mm20.launcher2.widgets.NotesWidget
 import de.mm20.launcher2.widgets.SmartSuggestionsWidget
 import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
-import de.mm20.launcher2.ui.launcher.widgets.todo.RecurrenceRuleEditorSheet
-import de.mm20.launcher2.ui.launcher.widgets.todo.formatRecurrenceSchedule
 import de.mm20.launcher2.widgets.Widget
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.map
@@ -1090,10 +1088,6 @@ fun ColumnScope.ConfigureTodoWidget(
     widget: TodoWidget,
     onWidgetUpdated: (TodoWidget) -> Unit,
 ) {
-    var editingRule by rememberSaveable { mutableStateOf<String?>(null) }
-    var showNewRuleEditor by rememberSaveable { mutableStateOf(false) }
-
-    // Display settings
     OutlinedCard {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -1112,88 +1106,53 @@ fun ColumnScope.ConfigureTodoWidget(
         }
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    val calendarRepository: CalendarRepository = koinInject()
+    val taskLists by remember {
+        calendarRepository.getGoogleTaskLists().map { lists ->
+            lists.sortedBy { it.name }
+        }
+    }.collectAsState(null)
 
-    // Recurring tasks section
-    Text(
-        text = stringResource(R.string.todo_widget_recurring_tasks),
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.padding(bottom = 8.dp),
-    )
+    val excludedCalendars = remember(widget.config) {
+        widget.config.excludedCalendars
+    }
 
-    OutlinedCard {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            widget.config.recurrenceRules.forEach { rule ->
-                Preference(
-                    title = rule.templateText,
-                    summary = formatRecurrenceSchedule(rule),
-                    onClick = { editingRule = rule.id },
-                    controls = {
-                        IconButton(onClick = {
+    if (taskLists?.isNotEmpty() == true) {
+        Text(
+            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.secondary,
+            text = stringResource(R.string.preference_search_tasks),
+        )
+        OutlinedCard {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                for ((i, taskList) in taskLists!!.withIndex()) {
+                    if (i > 0) HorizontalDivider()
+                    CheckboxPreference(
+                        title = taskList.name,
+                        summary = taskList.owner,
+                        iconPadding = false,
+                        value = !excludedCalendars.contains(taskList.id),
+                        onValueChanged = {
                             onWidgetUpdated(
                                 widget.copy(
                                     config = widget.config.copy(
-                                        recurrenceRules = widget.config.recurrenceRules.filter { it.id != rule.id },
-                                        items = widget.config.items.filter { it.recurrenceRuleId != rule.id },
+                                        excludedCalendars = if (it) {
+                                            excludedCalendars - taskList.id
+                                        } else {
+                                            excludedCalendars + taskList.id
+                                        }
                                     )
                                 )
                             )
-                        }) {
-                            Icon(
-                                painterResource(R.drawable.delete_24px),
-                                contentDescription = stringResource(R.string.todo_widget_delete),
-                            )
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
-            Preference(
-                title = stringResource(R.string.todo_widget_add_recurring),
-                icon = R.drawable.add_24px,
-                onClick = { showNewRuleEditor = true },
-            )
         }
     }
-
-    // Rule editor sheets
-    val ruleBeingEdited = editingRule?.let { id ->
-        widget.config.recurrenceRules.find { it.id == id }
-    }
-    RecurrenceRuleEditorSheet(
-        expanded = ruleBeingEdited != null,
-        rule = ruleBeingEdited,
-        onSave = { updatedRule ->
-            onWidgetUpdated(
-                widget.copy(
-                    config = widget.config.copy(
-                        recurrenceRules = widget.config.recurrenceRules.map {
-                            if (it.id == updatedRule.id) updatedRule else it
-                        }
-                    )
-                )
-            )
-            editingRule = null
-        },
-        onDismiss = { editingRule = null },
-    )
-
-    RecurrenceRuleEditorSheet(
-        expanded = showNewRuleEditor,
-        rule = null,
-        onSave = { newRule ->
-            onWidgetUpdated(
-                widget.copy(
-                    config = widget.config.copy(
-                        recurrenceRules = widget.config.recurrenceRules + newRule
-                    )
-                )
-            )
-            showNewRuleEditor = false
-        },
-        onDismiss = { showNewRuleEditor = false },
-    )
 }
 
 fun formatLinkedFileUri(uri: Uri?): String {
