@@ -41,6 +41,12 @@ interface CalendarRepository : SearchableRepository<CalendarEvent> {
         excludeAllDayEvents: Boolean = false,
     ): Flow<ImmutableList<CalendarEvent>>
 
+    fun findGoogleTasks(
+        from: Long = 0L,
+        to: Long = System.currentTimeMillis() + 14 * 24 * 60 * 60 * 1000L,
+        excludeCalendars: List<String> = emptyList(),
+    ): Flow<ImmutableList<CalendarEvent>>
+
     fun getCalendars(providerId: String? = null): Flow<List<CalendarList>>
 
     suspend fun completeTask(event: CalendarEvent, completed: Boolean)
@@ -84,7 +90,7 @@ internal class CalendarRepositoryImpl(
                     "tasks.org" -> if (taskPerm) TasksCalendarProvider(context) else null
                     else -> PluginCalendarProvider(context, it)
                 }
-            } + if (googleApiHelper.isSignedIn()) listOf(GoogleTasksProvider(context, googleApiHelper)) else emptyList()
+            }
 
             val now = System.currentTimeMillis()
             emitAll(
@@ -117,7 +123,6 @@ internal class CalendarRepositoryImpl(
             val providers = buildList {
                 if (calPerm) add(AndroidCalendarProvider(context))
                 if (taskPerm) add(TasksCalendarProvider(context))
-                if (googleApiHelper.isSignedIn()) add(GoogleTasksProvider(context, googleApiHelper))
                 addAll(plugins.map { PluginCalendarProvider(context, it.authority) })
             }
 
@@ -132,6 +137,32 @@ internal class CalendarRepositoryImpl(
                     allowNetwork = false,
                 ).debounce(500)
             )
+        }
+    }
+
+    override fun findGoogleTasks(
+        from: Long,
+        to: Long,
+        excludeCalendars: List<String>,
+    ): Flow<ImmutableList<CalendarEvent>> {
+        if (!googleApiHelper.isSignedIn()) {
+            return flow { emit(persistentListOf()) }
+        }
+        val provider = GoogleTasksProvider(context, googleApiHelper)
+        return flow {
+            val excludedIds = excludeCalendars.mapNotNull {
+                val parts = it.split(":")
+                if (parts.size == 2 && parts[0] == provider.namespace) parts[1] else null
+            }
+            val tasks = provider.search(
+                query = null,
+                from = from,
+                to = to,
+                excludedCalendars = excludedIds,
+                excludeAllDayEvents = false,
+                allowNetwork = false,
+            )
+            emit(tasks.toPersistentList())
         }
     }
 

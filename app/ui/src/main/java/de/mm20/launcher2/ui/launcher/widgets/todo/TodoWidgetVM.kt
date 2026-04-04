@@ -111,12 +111,11 @@ class TodoWidgetVM : ViewModel(), KoinComponent {
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli()
-            calendarRepository.findMany(
+            calendarRepository.findGoogleTasks(
                 from = 0L,
                 to = endOfRange,
                 excludeCalendars = config.excludedCalendars,
-            ).collectLatest { events ->
-                val taskEvents = events.filter { it.isTask }
+            ).collectLatest { taskEvents ->
                 allTasks = taskEvents
 
                 // Compute available dates from task due dates

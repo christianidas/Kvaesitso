@@ -93,7 +93,7 @@ internal class GoogleTasksProvider(
             try {
                 withAuth { token ->
                     val lists = fetchTaskLists(token).filter { list ->
-                        "$namespace:${list.id}" !in excludedCalendars
+                        list.id !in excludedCalendars
                     }
                     val maxDate = Instant.ofEpochMilli(to).atZone(ZoneId.systemDefault()).toLocalDate()
                     lists.flatMap { taskList ->
