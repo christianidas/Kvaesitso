@@ -60,7 +60,7 @@ class AgendaWidgetVM : ViewModel(), KoinComponent {
     val hiddenRunningTasks = mutableStateOf(0)
 
     val selectedDate = mutableStateOf(LocalDate.now())
-    var availableDates = listOf(LocalDate.now())
+    var availableDates = (0L until 14L).map { LocalDate.now().plusDays(it) }
         private set
 
     val isGoogleSignedIn = mutableStateOf(false)
@@ -72,18 +72,8 @@ class AgendaWidgetVM : ViewModel(), KoinComponent {
     private var upcomingEvents: List<CalendarEvent> = emptyList()
         set(value) {
             field = value
-            val dates = value.flatMap {
-                val startDate =
-                    it.startTime?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate() }
-                val endDate =
-                    Instant.ofEpochMilli(it.endTime).atZone(ZoneId.systemDefault()).toLocalDate()
-                return@flatMap listOfNotNull(startDate, endDate)
-            }.union(listOf(LocalDate.now()))
-                .distinct()
-                .sorted()
-            availableDates = dates.toList()
-            val date = selectedDate.value?.takeIf { dates.contains(it) } ?: LocalDate.now()
-            selectDate(date)
+            updateEvents()
+            updateFilteredTasks()
         }
 
     // Google Tasks specific state
@@ -111,14 +101,11 @@ class AgendaWidgetVM : ViewModel(), KoinComponent {
     }
 
     fun selectDate(date: LocalDate) {
-        val dates = availableDates
         showRunningPastDayEvents = false
         showRunningTasks = false
-        if (dates.contains(date)) {
-            selectedDate.value = date
-            updateEvents()
-            updateFilteredTasks()
-        }
+        selectedDate.value = date
+        updateEvents()
+        updateFilteredTasks()
     }
 
     fun showAllEvents() {
@@ -243,15 +230,6 @@ class AgendaWidgetVM : ViewModel(), KoinComponent {
                 excludeCalendars = config.excludedTaskCalendars,
             ).collectLatest { taskEvents ->
                 allGoogleTasks = taskEvents
-                // Merge task dates into available dates
-                val today = LocalDate.now()
-                val taskDates = taskEvents.mapNotNull { task ->
-                    val taskDate = Instant.ofEpochMilli(task.endTime)
-                        .atZone(ZoneId.systemDefault()).toLocalDate()
-                    if (taskDate < today) today else taskDate
-                }
-                val mergedDates = (availableDates + taskDates).distinct().sorted()
-                availableDates = mergedDates
                 updateFilteredTasks()
             }
         }
