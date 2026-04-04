@@ -149,7 +149,7 @@ class AgendaWidgetVM : ViewModel(), KoinComponent {
         // Next events from all upcoming (both events and tasks)
         val allCurrentEvents = events + taskEvents.value
         val e = this.upcomingEvents
-        if (allCurrentEvents.isEmpty() && e.isNotEmpty()) {
+        if (allCurrentEvents.isEmpty() && e.isNotEmpty() && date == LocalDate.now()) {
             nextEvents.value = listOfNotNull(
                 e.sortedBy { if (it.isTask) it.endTime else (it.startTime ?: 0L) }
                     .find { now < if (it.isTask) it.endTime else (it.startTime ?: 0L) }
