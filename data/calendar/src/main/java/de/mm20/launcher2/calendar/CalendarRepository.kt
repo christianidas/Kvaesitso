@@ -49,6 +49,7 @@ interface CalendarRepository : SearchableRepository<CalendarEvent> {
 
     fun getCalendars(providerId: String? = null): Flow<List<CalendarList>>
 
+    fun getGoogleTaskLists(): Flow<List<CalendarList>>
     suspend fun completeTask(event: CalendarEvent, completed: Boolean)
     suspend fun createGoogleTask(title: String)
     suspend fun postponeTask(event: CalendarEvent, toDate: java.time.LocalDate)
@@ -230,7 +231,6 @@ internal class CalendarRepositoryImpl(
                 buildList {
                     if (calPerm) add(AndroidCalendarProvider(context))
                     if (tasksPerm) add(TasksCalendarProvider(context))
-                    if (googleApiHelper.isSignedIn()) add(GoogleTasksProvider(context, googleApiHelper))
                     addAll(plugins.map { PluginCalendarProvider(context, it.authority) })
                 }
             }
@@ -247,6 +247,17 @@ internal class CalendarRepositoryImpl(
                 }
                 emitAll(result)
             }
+        }
+    }
+
+    override fun getGoogleTaskLists(): Flow<List<CalendarList>> {
+        return flow {
+            if (!googleApiHelper.isSignedIn()) {
+                emit(emptyList())
+                return@flow
+            }
+            val provider = GoogleTasksProvider(context, googleApiHelper)
+            emit(provider.getCalendarLists())
         }
     }
 

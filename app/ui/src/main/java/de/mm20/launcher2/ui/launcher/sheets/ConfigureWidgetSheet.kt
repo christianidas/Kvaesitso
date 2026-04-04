@@ -1105,6 +1105,54 @@ fun ColumnScope.ConfigureTodoWidget(
             )
         }
     }
+
+    val calendarRepository: CalendarRepository = koinInject()
+    val taskLists by remember {
+        calendarRepository.getGoogleTaskLists().map { lists ->
+            lists.sortedBy { it.name }
+        }
+    }.collectAsState(null)
+
+    val excludedCalendars = remember(widget.config) {
+        widget.config.excludedCalendars
+    }
+
+    if (taskLists?.isNotEmpty() == true) {
+        Text(
+            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.secondary,
+            text = stringResource(R.string.preference_search_tasks),
+        )
+        OutlinedCard {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                for ((i, taskList) in taskLists!!.withIndex()) {
+                    if (i > 0) HorizontalDivider()
+                    CheckboxPreference(
+                        title = taskList.name,
+                        summary = taskList.owner,
+                        iconPadding = false,
+                        value = !excludedCalendars.contains(taskList.id),
+                        onValueChanged = {
+                            onWidgetUpdated(
+                                widget.copy(
+                                    config = widget.config.copy(
+                                        excludedCalendars = if (it) {
+                                            excludedCalendars - taskList.id
+                                        } else {
+                                            excludedCalendars + taskList.id
+                                        }
+                                    )
+                                )
+                            )
+                        },
+                    )
+                }
+            }
+        }
+    }
 }
 
 fun formatLinkedFileUri(uri: Uri?): String {
