@@ -119,6 +119,7 @@ import de.mm20.launcher2.widgets.CalendarWidget
 import de.mm20.launcher2.widgets.MusicWidget
 import de.mm20.launcher2.widgets.NotesWidget
 import de.mm20.launcher2.widgets.SmartSuggestionsWidget
+import de.mm20.launcher2.widgets.AgendaWidget
 import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
 import de.mm20.launcher2.widgets.Widget
@@ -158,6 +159,7 @@ fun ConfigureWidgetSheet(
                 is SmartSuggestionsWidget -> {}
                 is AppUsageWidget -> {}
                 is TodoWidget -> ConfigureTodoWidget(widget, onWidgetUpdated)
+                is AgendaWidget -> ConfigureAgendaWidget(widget, onWidgetUpdated)
             }
         }
 
@@ -673,6 +675,7 @@ fun ColumnScope.ConfigureAppWidget(
                     is SmartSuggestionsWidget -> it.copy(id = widget.id)
                     is AppUsageWidget -> it.copy(id = widget.id)
                     is TodoWidget -> it.copy(id = widget.id)
+                    is AgendaWidget -> it.copy(id = widget.id)
                 }
                 onWidgetUpdated(updatedWidget)
                 replaceWidget = false
@@ -1143,6 +1146,200 @@ fun ColumnScope.ConfigureTodoWidget(
                                             excludedCalendars - taskList.id
                                         } else {
                                             excludedCalendars + taskList.id
+                                        }
+                                    )
+                                )
+                            )
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ColumnScope.ConfigureAgendaWidget(
+    widget: AgendaWidget,
+    onWidgetUpdated: (AgendaWidget) -> Unit,
+) {
+    val calendarRepository: CalendarRepository = koinInject()
+    val permissionsManager: PermissionsManager = koinInject()
+    val pluginRepository: PluginRepository = koinInject()
+    val calendars by remember {
+        calendarRepository.getCalendars().map {
+            it.sortedBy { it.name }
+        }
+    }.collectAsState(null)
+    val plugins by remember {
+        pluginRepository.findMany(
+            type = PluginType.Calendar,
+            enabled = true,
+        )
+    }.collectAsState(emptyList())
+
+    val hasPermission by remember {
+        permissionsManager.hasPermission(PermissionGroup.Calendar)
+    }.collectAsState(true)
+
+    val hasTasks = remember(calendars) {
+        calendars?.any { it.types.contains(CalendarListType.Tasks) } == true
+    }
+
+    // Completed tasks toggle
+    AnimatedVisibility(hasTasks) {
+        OutlinedCard {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                SwitchPreference(
+                    title = stringResource(R.string.preference_calendar_hide_completed),
+                    iconPadding = false,
+                    value = !widget.config.completedTasks,
+                    onValueChanged = {
+                        onWidgetUpdated(widget.copy(config = widget.config.copy(completedTasks = !it)))
+                    }
+                )
+            }
+        }
+    }
+
+    // Show completed tasks in todo section
+    OutlinedCard(
+        modifier = Modifier.padding(top = 8.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            SwitchPreference(
+                title = stringResource(R.string.todo_widget_show_completed),
+                iconPadding = false,
+                value = widget.config.showCompletedTasks,
+                onValueChanged = {
+                    onWidgetUpdated(
+                        widget.copy(config = widget.config.copy(showCompletedTasks = it))
+                    )
+                },
+            )
+        }
+    }
+
+    // Calendar selection
+    val context = LocalLifecycleOwner.current as AppCompatActivity
+    val excludedCalendars = remember(widget.config) {
+        widget.config.excludedCalendarIds
+    }
+
+    val groups = remember(calendars) {
+        calendars?.groupBy { it.providerId }?.entries
+    }
+
+    if (groups?.isNotEmpty() == true) {
+        for (group in groups) {
+            val pluginName = remember(plugins, group.key) {
+                if (group.key == "local") context.getString(R.string.preference_calendar_calendars)
+                else if (group.key == "tasks.org") context.getString(R.string.preference_search_tasks)
+                else plugins.find { it.authority == group.key }?.label
+            }
+            if (pluginName != null) {
+                Text(
+                    modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    text = pluginName
+                )
+            }
+            OutlinedCard {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    for ((i, calendar) in group.value.withIndex()) {
+                        if (i > 0) HorizontalDivider()
+                        CheckboxPreference(
+                            title = calendar.name,
+                            summary = calendar.owner,
+                            iconPadding = false,
+                            value = !excludedCalendars.contains(calendar.id),
+                            onValueChanged = {
+                                onWidgetUpdated(
+                                    widget.copy(
+                                        config = widget.config.copy(
+                                            excludedCalendarIds = if (it) {
+                                                excludedCalendars - calendar.id
+                                            } else {
+                                                excludedCalendars + calendar.id
+                                            }
+                                        )
+                                    )
+                                )
+                            },
+                            checkboxColors = CheckboxDefaults.colors(
+                                checkedColor = if (calendar.color == 0) MaterialTheme.colorScheme.primary
+                                else Color(
+                                    calendar.color.atTone(if (LocalDarkTheme.current) 80 else 40)
+                                ),
+                                checkmarkColor = if (calendar.color == 0) MaterialTheme.colorScheme.onPrimary
+                                else Color(
+                                    calendar.color.atTone(if (LocalDarkTheme.current) 20 else 100)
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    } else if (!hasPermission) {
+        MissingPermissionBanner(
+            modifier = Modifier.padding(8.dp),
+            text = stringResource(R.string.missing_permission_calendar_widget_settings),
+            onClick = { permissionsManager.requestPermission(context, PermissionGroup.Calendar) },
+        )
+    } else if (calendars != null) {
+        Text(
+            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = stringResource(R.string.widget_config_calendar_no_calendars)
+        )
+    }
+
+    // Google Task lists
+    val taskLists by remember {
+        calendarRepository.getGoogleTaskLists().map { lists ->
+            lists.sortedBy { it.name }
+        }
+    }.collectAsState(null)
+
+    val excludedTaskCalendars = remember(widget.config) {
+        widget.config.excludedTaskCalendars
+    }
+
+    if (taskLists?.isNotEmpty() == true) {
+        Text(
+            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.secondary,
+            text = stringResource(R.string.preference_search_tasks),
+        )
+        OutlinedCard {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                for ((i, taskList) in taskLists!!.withIndex()) {
+                    if (i > 0) HorizontalDivider()
+                    CheckboxPreference(
+                        title = taskList.name,
+                        summary = taskList.owner,
+                        iconPadding = false,
+                        value = !excludedTaskCalendars.contains(taskList.id),
+                        onValueChanged = {
+                            onWidgetUpdated(
+                                widget.copy(
+                                    config = widget.config.copy(
+                                        excludedTaskCalendars = if (it) {
+                                            excludedTaskCalendars - taskList.id
+                                        } else {
+                                            excludedTaskCalendars + taskList.id
                                         }
                                     )
                                 )
