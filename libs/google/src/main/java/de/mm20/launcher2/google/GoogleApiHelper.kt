@@ -107,7 +107,48 @@ class GoogleApiHelper(val context: Context) {
         }
     }
 
+    /**
+     * Returns an access token for the given scopes, or null if unavailable.
+     * Throws [UserRecoverableAuthException] if the user needs to grant consent.
+     */
+    @Throws(UserRecoverableAuthException::class)
+    suspend fun getAccessTokenForScopes(vararg scopes: String): String? {
+        val email = getAccountEmail() ?: return null
+        val scopeString = scopes.joinToString(" ")
+        return withContext(Dispatchers.IO) {
+            try {
+                GoogleAuthUtil.getToken(
+                    context,
+                    Account(email, "com.google"),
+                    "oauth2:$scopeString"
+                )
+            } catch (e: UserRecoverableAuthException) {
+                throw e
+            } catch (e: GoogleAuthException) {
+                Log.e("GoogleApiHelper", "Auth error getting token", e)
+                null
+            } catch (e: IOException) {
+                Log.e("GoogleApiHelper", "IO error getting token", e)
+                null
+            }
+        }
+    }
+
+    /**
+     * Returns an access token for the given scopes, or null if unavailable or consent not yet granted.
+     * Does not throw — safe for background use.
+     */
+    suspend fun getAccessTokenForScopesOrNull(vararg scopes: String): String? {
+        return try {
+            getAccessTokenForScopes(*scopes)
+        } catch (e: UserRecoverableAuthException) {
+            null
+        }
+    }
+
     companion object {
         const val TASKS_SCOPE = "https://www.googleapis.com/auth/tasks"
+        const val HOME_SCOPE_RUN = "https://www.googleapis.com/auth/home.run"
+        const val HOME_SCOPE_READ = "https://www.googleapis.com/auth/home.read"
     }
 }

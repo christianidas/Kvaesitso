@@ -82,6 +82,12 @@ sealed class Widget {
                             ?: TodoWidgetConfig()
                     TodoWidget(entity.id, config)
                 }
+                HomeAutomationWidget.Type -> {
+                    val config: HomeAutomationWidgetConfig =
+                        Json.decodeFromStringOrNull(entity.config?.takeIf { it.isNotBlank() })
+                            ?: HomeAutomationWidgetConfig()
+                    HomeAutomationWidget(entity.id, config)
+                }
 
                 else -> null
             }
