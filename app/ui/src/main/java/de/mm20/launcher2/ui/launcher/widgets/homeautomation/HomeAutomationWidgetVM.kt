@@ -32,6 +32,7 @@ class HomeAutomationWidgetVM : ViewModel(), KoinComponent {
     val structures = mutableStateOf<List<HomeStructure>>(emptyList())
     val isSignedIn = mutableStateOf(false)
     val isLoading = mutableStateOf(false)
+    val needsConsent = mutableStateOf<Intent?>(null)
     val selectedRoom = mutableStateOf<String?>(null)
 
     fun updateWidget(widget: HomeAutomationWidget) {
@@ -49,7 +50,13 @@ class HomeAutomationWidgetVM : ViewModel(), KoinComponent {
     private fun loadDevices() {
         isLoading.value = true
         viewModelScope.launch {
-            repository.refresh()
+            val consentIntent = repository.refresh()
+            if (consentIntent != null) {
+                needsConsent.value = consentIntent
+                isLoading.value = false
+                return@launch
+            }
+            needsConsent.value = null
             isLoading.value = false
         }
         viewModelScope.launch {
@@ -108,15 +115,16 @@ class HomeAutomationWidgetVM : ViewModel(), KoinComponent {
         }
     }
 
+    fun onConsentGranted() {
+        needsConsent.value = null
+        loadDevices()
+    }
+
     fun signIn(context: Context) {
         context.startActivity(Intent(context, GoogleLoginActivity::class.java))
     }
 
     fun refresh() {
-        isLoading.value = true
-        viewModelScope.launch {
-            repository.refresh()
-            isLoading.value = false
-        }
+        loadDevices()
     }
 }

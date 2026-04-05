@@ -1,5 +1,8 @@
 package de.mm20.launcher2.ui.launcher.widgets.homeautomation
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -63,8 +66,22 @@ fun HomeAutomationWidget(
     val devices by viewModel.devices
     val isSignedIn by viewModel.isSignedIn
     val isLoading by viewModel.isLoading
+    val needsConsent by viewModel.needsConsent
     val selectedRoom by viewModel.selectedRoom
     val structures by viewModel.structures
+
+    val consentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            viewModel.onConsentGranted()
+        }
+    }
+
+    // Auto-launch consent when needed
+    LaunchedEffect(needsConsent) {
+        needsConsent?.let { consentLauncher.launch(it) }
+    }
 
     Column(
         modifier = Modifier

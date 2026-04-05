@@ -45,6 +45,7 @@ dependencies {
 
     implementation(libs.koin.android)
     implementation(libs.bundles.ktor)
+    implementation(libs.play.services.auth)
 
     implementation(project(":core:ktx"))
     implementation(project(":core:base"))

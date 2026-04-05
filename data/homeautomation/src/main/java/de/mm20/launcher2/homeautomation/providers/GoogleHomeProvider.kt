@@ -1,6 +1,8 @@
 package de.mm20.launcher2.homeautomation.providers
 
+import android.content.Intent
 import android.util.Log
+import com.google.android.gms.auth.UserRecoverableAuthException
 import de.mm20.launcher2.google.GoogleApiHelper
 import de.mm20.launcher2.homeautomation.*
 import de.mm20.launcher2.serialization.Json
@@ -85,6 +87,19 @@ internal class GoogleHomeProvider(
         GoogleApiHelper.HOME_SCOPE_RUN,
         GoogleApiHelper.HOME_SCOPE_READ,
     )
+
+    /**
+     * Check if user needs to grant consent for Home scopes.
+     * Returns the consent Intent if needed, null otherwise.
+     */
+    suspend fun getConsentIntentIfNeeded(): Intent? {
+        return try {
+            googleApiHelper.getAccessTokenForScopes(*homeScopes)
+            null
+        } catch (e: UserRecoverableAuthException) {
+            e.intent
+        }
+    }
 
     private suspend fun <T> withAuth(block: suspend (token: String) -> T): T? {
         val token = googleApiHelper.getAccessTokenForScopesOrNull(*homeScopes) ?: return null

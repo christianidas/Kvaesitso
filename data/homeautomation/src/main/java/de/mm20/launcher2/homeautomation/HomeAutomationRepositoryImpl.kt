@@ -1,5 +1,6 @@
 package de.mm20.launcher2.homeautomation
 
+import android.content.Intent
 import de.mm20.launcher2.homeautomation.providers.GoogleHomeProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,6 @@ internal class HomeAutomationRepositoryImpl(
 
     override suspend fun executeCommand(command: HomeCommand) {
         googleHomeProvider.executeCommand(command)
-        // Optimistic update for OnOff
         if (command is HomeCommand.SetOnOff) {
             _devices.value = _devices.value.map { device ->
                 if (device.id == command.deviceId) {
@@ -33,12 +33,15 @@ internal class HomeAutomationRepositoryImpl(
     }
 
     override suspend fun activateScene(sceneId: String) {
-        // Scene activation via Google Home API - to be implemented
-        // when the API schema for scenes is confirmed
+        // To be implemented when the API schema for scenes is confirmed
     }
 
-    override suspend fun refresh() {
+    override suspend fun refresh(): Intent? {
+        val consentIntent = googleHomeProvider.getConsentIntentIfNeeded()
+        if (consentIntent != null) return consentIntent
+
         _structures.value = googleHomeProvider.fetchStructures()
         _devices.value = googleHomeProvider.fetchDevices()
+        return null
     }
 }
