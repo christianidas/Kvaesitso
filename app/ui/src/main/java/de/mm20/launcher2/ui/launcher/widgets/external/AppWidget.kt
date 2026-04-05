@@ -25,6 +25,7 @@ import de.mm20.launcher2.ui.component.Banner
 import de.mm20.launcher2.ui.launcher.sheets.WidgetPickerSheet
 import de.mm20.launcher2.ui.locals.LocalDarkTheme
 import de.mm20.launcher2.ui.locals.LocalPreferDarkContentOverWallpaper
+import de.mm20.launcher2.widgets.AgendaWidget
 import de.mm20.launcher2.widgets.AppUsageWidget
 import de.mm20.launcher2.widgets.AppWidget
 import de.mm20.launcher2.widgets.AppsWidget
@@ -90,6 +91,7 @@ fun AppWidget(
                     is SmartSuggestionsWidget -> it.copy(id = widget.id)
                     is AppUsageWidget -> it.copy(id = widget.id)
                     is TodoWidget -> it.copy(id = widget.id)
+                    is AgendaWidget -> it.copy(id = widget.id)
                     is HomeAutomationWidget -> it.copy(id = widget.id)
                 }
                 onWidgetUpdate(updatedWidget)

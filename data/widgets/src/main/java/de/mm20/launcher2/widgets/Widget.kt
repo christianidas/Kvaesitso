@@ -88,6 +88,12 @@ sealed class Widget {
                             ?: HomeAutomationWidgetConfig()
                     HomeAutomationWidget(entity.id, config)
                 }
+                AgendaWidget.Type -> {
+                    val config: AgendaWidgetConfig =
+                        Json.decodeFromStringOrNull(entity.config?.takeIf { it.isNotBlank() })
+                            ?: AgendaWidgetConfig()
+                    AgendaWidget(entity.id, config)
+                }
 
                 else -> null
             }
