@@ -147,7 +147,7 @@ class AgendaWidgetVM : ViewModel(), KoinComponent {
         calendarEvents.value = events
 
         // Next events from all upcoming (both events and tasks)
-        val allCurrentEvents = events + taskEvents.value
+        val allCurrentEvents = events
         val e = this.upcomingEvents
         if (allCurrentEvents.isEmpty() && e.isNotEmpty() && date == LocalDate.now()) {
             nextEvents.value = listOfNotNull(
