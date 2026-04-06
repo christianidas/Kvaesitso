@@ -148,7 +148,6 @@ class GoogleApiHelper(val context: Context) {
 
     companion object {
         const val TASKS_SCOPE = "https://www.googleapis.com/auth/tasks"
-        const val HOME_SCOPE_RUN = "https://www.googleapis.com/auth/home.run"
-        const val HOME_SCOPE_READ = "https://www.googleapis.com/auth/home.read"
+        const val SDM_SCOPE = "https://www.googleapis.com/auth/sdm.service"
     }
 }

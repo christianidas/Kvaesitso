@@ -14,6 +14,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -25,50 +26,55 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 
 private const val TAG = "GoogleHomeProvider"
 
+// SDM API response models
+
 @Serializable
-internal data class GoogleHomeStructureResponse(
-    val structures: List<GoogleHomeStructureItem>? = null,
+internal data class SdmDeviceListResponse(
+    val devices: List<SdmDevice>? = null,
 )
 
 @Serializable
-internal data class GoogleHomeStructureItem(
-    val name: String,
-    val traits: JsonObject? = null,
-)
-
-@Serializable
-internal data class GoogleHomeRoomResponse(
-    val rooms: List<GoogleHomeRoomItem>? = null,
-)
-
-@Serializable
-internal data class GoogleHomeRoomItem(
-    val name: String,
-    val traits: JsonObject? = null,
-)
-
-@Serializable
-internal data class GoogleHomeDeviceResponse(
-    val devices: List<GoogleHomeDeviceItem>? = null,
-)
-
-@Serializable
-internal data class GoogleHomeDeviceItem(
+internal data class SdmDevice(
     val name: String,
     val type: String? = null,
     val traits: JsonObject? = null,
-    val parentRelations: List<GoogleHomeParentRelation>? = null,
+    val parentRelations: List<SdmParentRelation>? = null,
 )
 
 @Serializable
-internal data class GoogleHomeParentRelation(
+internal data class SdmParentRelation(
     val parent: String? = null,
     val displayName: String? = null,
+)
+
+@Serializable
+internal data class SdmStructureListResponse(
+    val structures: List<SdmStructure>? = null,
+)
+
+@Serializable
+internal data class SdmStructure(
+    val name: String,
+    val traits: JsonObject? = null,
+)
+
+@Serializable
+internal data class SdmRoomListResponse(
+    val rooms: List<SdmRoom>? = null,
+)
+
+@Serializable
+internal data class SdmRoom(
+    val name: String,
+    val traits: JsonObject? = null,
 )
 
 internal class GoogleHomeProvider(
@@ -84,20 +90,31 @@ internal class GoogleHomeProvider(
     }
 
     private val homeScopes = arrayOf(
-        GoogleApiHelper.HOME_SCOPE_RUN,
-        GoogleApiHelper.HOME_SCOPE_READ,
+        GoogleApiHelper.SDM_SCOPE,
     )
 
-    /**
-     * Check if user needs to grant consent for Home scopes.
-     * Returns the consent Intent if needed, null otherwise.
-     */
+    private val projectId: String
+        get() = de.mm20.launcher2.homeautomation.BuildConfig.SDM_PROJECT_ID
+
+    private val baseUrl: String
+        get() = "$BASE_URL/enterprises/$projectId"
+
     suspend fun getConsentIntentIfNeeded(): Intent? {
+        if (projectId.isBlank()) {
+            Log.w(TAG, "SDM project ID not configured in local.properties (google.sdmProjectId)")
+            return null
+        }
+        Log.d(TAG, "Checking consent for SDM scope, signed in: ${googleApiHelper.isSignedIn()}")
         return try {
-            googleApiHelper.getAccessTokenForScopes(*homeScopes)
+            val token = googleApiHelper.getAccessTokenForScopes(*homeScopes)
+            Log.d(TAG, "Got SDM token: ${if (token != null) "yes" else "null"}")
             null
         } catch (e: UserRecoverableAuthException) {
+            Log.d(TAG, "Need consent for SDM scope, intent: ${e.intent}")
             e.intent
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error checking consent", e)
+            null
         }
     }
 
@@ -114,20 +131,30 @@ internal class GoogleHomeProvider(
     }
 
     suspend fun fetchStructures(): List<HomeStructure> = withContext(Dispatchers.IO) {
+        if (projectId.isBlank()) return@withContext emptyList()
         try {
             withAuth { token ->
-                val response = httpClient.get("$BASE_URL/structures") {
+                val response = httpClient.get("$baseUrl/structures") {
                     header(HttpHeaders.Authorization, "Bearer $token")
                 }
-                if (!response.status.isSuccess()) return@withAuth emptyList()
-                val structures = response.body<GoogleHomeStructureResponse>().structures ?: return@withAuth emptyList()
+                Log.d(TAG, "Structures response: ${response.status}")
+                if (!response.status.isSuccess()) {
+                    Log.e(TAG, "Structures error: ${response.bodyAsText()}")
+                    return@withAuth emptyList()
+                }
+                val structures = response.body<SdmStructureListResponse>().structures ?: return@withAuth emptyList()
 
                 structures.map { structure ->
                     val structureId = structure.name
                     val rooms = fetchRooms(token, structureId)
+                    val displayName = structure.traits
+                        ?.get("sdm.structures.traits.Info")
+                        ?.jsonObject?.get("customName")
+                        ?.jsonPrimitive?.content
+                        ?: extractDisplayName(structureId)
                     HomeStructure(
                         id = structureId,
-                        name = extractDisplayName(structureId),
+                        name = displayName,
                         rooms = rooms,
                     )
                 }
@@ -140,15 +167,20 @@ internal class GoogleHomeProvider(
 
     private suspend fun fetchRooms(token: String, structureId: String): List<HomeRoom> {
         return try {
-            val response = httpClient.get("$BASE_URL/$structureId/rooms") {
+            val response = httpClient.get("$baseUrl/rooms") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
             if (!response.status.isSuccess()) return emptyList()
-            val rooms = response.body<GoogleHomeRoomResponse>().rooms ?: return emptyList()
-            rooms.map { room ->
+            val rooms = response.body<SdmRoomListResponse>().rooms ?: return emptyList()
+            rooms.filter { it.name.startsWith(structureId) }.map { room ->
+                val displayName = room.traits
+                    ?.get("sdm.structures.traits.Info")
+                    ?.jsonObject?.get("customName")
+                    ?.jsonPrimitive?.content
+                    ?: extractDisplayName(room.name)
                 HomeRoom(
                     id = room.name,
-                    name = extractDisplayName(room.name),
+                    name = displayName,
                 )
             }
         } catch (e: Exception) {
@@ -158,13 +190,19 @@ internal class GoogleHomeProvider(
     }
 
     suspend fun fetchDevices(): List<HomeDevice> = withContext(Dispatchers.IO) {
+        if (projectId.isBlank()) return@withContext emptyList()
         try {
             withAuth { token ->
-                val response = httpClient.get("$BASE_URL/devices") {
+                val response = httpClient.get("$baseUrl/devices") {
                     header(HttpHeaders.Authorization, "Bearer $token")
                 }
-                if (!response.status.isSuccess()) return@withAuth emptyList()
-                val devices = response.body<GoogleHomeDeviceResponse>().devices ?: return@withAuth emptyList()
+                Log.d(TAG, "Devices response: ${response.status}")
+                if (!response.status.isSuccess()) {
+                    Log.e(TAG, "Devices error: ${response.bodyAsText()}")
+                    return@withAuth emptyList()
+                }
+                val devices = response.body<SdmDeviceListResponse>().devices ?: return@withAuth emptyList()
+                Log.d(TAG, "Got ${devices.size} devices")
                 devices.map { it.toHomeDevice() }
             } ?: emptyList()
         } catch (e: Exception) {
@@ -188,85 +226,86 @@ internal class GoogleHomeProvider(
         }
     }
 
-    private fun GoogleHomeDeviceItem.toHomeDevice(): HomeDevice {
+    private fun SdmDevice.toHomeDevice(): HomeDevice {
         val room = parentRelations?.firstOrNull()?.displayName
         return HomeDevice(
             id = name,
-            name = extractDisplayName(name),
+            name = extractDeviceName(this),
             room = room,
-            type = mapDeviceType(type),
-            traits = parseTraits(traits),
+            type = mapSdmDeviceType(type),
+            traits = parseSdmTraits(traits),
         )
     }
 
-    private fun mapDeviceType(type: String?): DeviceType = when {
+    private fun extractDeviceName(device: SdmDevice): String {
+        // SDM devices don't always have a friendly name in the API response.
+        // The parent relation displayName is usually the room name.
+        // Try to get name from traits or fall back to type + room.
+        val room = device.parentRelations?.firstOrNull()?.displayName ?: ""
+        val typeName = when {
+            device.type?.contains("THERMOSTAT") == true -> "Thermostat"
+            device.type?.contains("CAMERA") == true -> "Camera"
+            device.type?.contains("DOORBELL") == true -> "Doorbell"
+            device.type?.contains("DISPLAY") == true -> "Display"
+            else -> "Device"
+        }
+        return if (room.isNotBlank()) "$room $typeName" else typeName
+    }
+
+    private fun mapSdmDeviceType(type: String?): DeviceType = when {
         type == null -> DeviceType.Other
-        type.contains("LIGHT", ignoreCase = true) -> DeviceType.Light
-        type.contains("SWITCH", ignoreCase = true) || type.contains("OUTLET", ignoreCase = true) -> DeviceType.Switch
-        type.contains("THERMOSTAT", ignoreCase = true) -> DeviceType.Thermostat
-        type.contains("LOCK", ignoreCase = true) -> DeviceType.Lock
-        type.contains("CAMERA", ignoreCase = true) -> DeviceType.Camera
-        type.contains("SPEAKER", ignoreCase = true) -> DeviceType.Speaker
-        type.contains("DISPLAY", ignoreCase = true) -> DeviceType.Display
-        type.contains("FAN", ignoreCase = true) -> DeviceType.Fan
-        type.contains("BLIND", ignoreCase = true) || type.contains("CURTAIN", ignoreCase = true) -> DeviceType.Blinds
-        type.contains("GARAGE", ignoreCase = true) -> DeviceType.Garage
-        type.contains("VACUUM", ignoreCase = true) -> DeviceType.Vacuum
+        type.contains("THERMOSTAT") -> DeviceType.Thermostat
+        type.contains("CAMERA") -> DeviceType.Camera
+        type.contains("DOORBELL") -> DeviceType.Camera
+        type.contains("DISPLAY") -> DeviceType.Display
         else -> DeviceType.Other
     }
 
-    private fun parseTraits(traits: JsonObject?): List<DeviceTrait> {
+    private fun parseSdmTraits(traits: JsonObject?): List<DeviceTrait> {
         if (traits == null) return emptyList()
         val result = mutableListOf<DeviceTrait>()
-        // Parse based on known trait keys in the Google Home API response
-        // The exact key names depend on the API version; adjust as needed
-        traits["OnOff"]?.let {
-            val on = (it as? JsonObject)?.get("on")?.toString()?.toBooleanStrictOrNull() ?: false
-            result.add(DeviceTrait.OnOff(on))
+
+        // Thermostat traits
+        traits["sdm.devices.traits.ThermostatMode"]?.jsonObject?.let { mode ->
+            val currentMode = mode["mode"]?.jsonPrimitive?.content ?: "OFF"
+            val ambient = traits["sdm.devices.traits.Temperature"]
+                ?.jsonObject?.get("ambientTemperatureCelsius")
+                ?.jsonPrimitive?.float
+            val setpoint = traits["sdm.devices.traits.ThermostatTemperatureSetpoint"]
+                ?.jsonObject?.get("heatCelsius")
+                ?.jsonPrimitive?.float
+                ?: traits["sdm.devices.traits.ThermostatTemperatureSetpoint"]
+                    ?.jsonObject?.get("coolCelsius")
+                    ?.jsonPrimitive?.float
+            result.add(DeviceTrait.ThermostatMode(currentMode, setpoint, ambient))
         }
-        traits["Brightness"]?.let {
-            val level = (it as? JsonObject)?.get("brightness")?.toString()?.toIntOrNull() ?: 0
-            result.add(DeviceTrait.Brightness(level))
+
+        // Camera/Doorbell - just mark as having on/off if it has live stream
+        traits["sdm.devices.traits.CameraLiveStream"]?.let {
+            result.add(DeviceTrait.OnOff(true))
         }
-        traits["LockUnlock"]?.let {
-            val locked = (it as? JsonObject)?.get("isLocked")?.toString()?.toBooleanStrictOrNull() ?: false
-            result.add(DeviceTrait.LockUnlock(locked))
-        }
+
         return result
     }
 
     private fun HomeCommand.toRequestBody(): JsonObject = when (this) {
         is HomeCommand.SetOnOff -> buildJsonObject {
-            put("command", "action.devices.commands.OnOff")
-            putJsonObject("params") { put("on", on) }
-        }
-        is HomeCommand.SetBrightness -> buildJsonObject {
-            put("command", "action.devices.commands.BrightnessAbsolute")
-            putJsonObject("params") { put("brightness", level) }
-        }
-        is HomeCommand.SetColorTemperature -> buildJsonObject {
-            put("command", "action.devices.commands.ColorAbsolute")
-            putJsonObject("params") {
-                putJsonObject("color") { put("temperatureK", kelvin) }
-            }
+            put("command", "sdm.devices.commands.CameraLiveStream.GenerateRtspStream")
+            putJsonObject("params") {}
         }
         is HomeCommand.SetThermostat -> buildJsonObject {
-            put("command", "action.devices.commands.ThermostatTemperatureSetpoint")
+            put("command", "sdm.devices.commands.ThermostatTemperatureSetpoint.SetHeat")
             putJsonObject("params") {
-                if (setpointCelsius != null) put("thermostatTemperatureSetpoint", setpointCelsius)
+                if (setpointCelsius != null) put("heatCelsius", setpointCelsius)
             }
         }
-        is HomeCommand.SetLock -> buildJsonObject {
-            put("command", "action.devices.commands.LockUnlock")
-            putJsonObject("params") { put("lock", locked) }
-        }
-        is HomeCommand.SetFanSpeed -> buildJsonObject {
-            put("command", "action.devices.commands.SetFanSpeed")
-            putJsonObject("params") { put("fanSpeed", speed.toString()) }
-        }
+        is HomeCommand.SetBrightness,
+        is HomeCommand.SetColorTemperature,
+        is HomeCommand.SetLock,
+        is HomeCommand.SetFanSpeed,
         is HomeCommand.SetOpenClose -> buildJsonObject {
-            put("command", "action.devices.commands.OpenClose")
-            putJsonObject("params") { put("openPercent", openPercent) }
+            // These device types are not supported by SDM API
+            // SDM only covers Nest devices (thermostats, cameras, doorbells)
         }
     }
 
@@ -275,6 +314,6 @@ internal class GoogleHomeProvider(
     }
 
     companion object {
-        private const val BASE_URL = "https://home.googleapis.com/v1"
+        private const val BASE_URL = "https://smartdevicemanagement.googleapis.com/v1"
     }
 }

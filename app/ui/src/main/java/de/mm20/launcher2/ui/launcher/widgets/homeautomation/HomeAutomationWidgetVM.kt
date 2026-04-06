@@ -2,6 +2,7 @@ package de.mm20.launcher2.ui.launcher.widgets.homeautomation
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -48,16 +49,23 @@ class HomeAutomationWidgetVM : ViewModel(), KoinComponent {
     }
 
     private fun loadDevices() {
+        Log.d("HomeAutoVM", "loadDevices() called, isSignedIn=${googleApiHelper.isSignedIn()}")
         isLoading.value = true
         viewModelScope.launch {
-            val consentIntent = repository.refresh()
-            if (consentIntent != null) {
-                needsConsent.value = consentIntent
+            try {
+                val consentIntent = repository.refresh()
+                Log.d("HomeAutoVM", "refresh returned consentIntent=$consentIntent")
+                if (consentIntent != null) {
+                    needsConsent.value = consentIntent
+                    isLoading.value = false
+                    return@launch
+                }
+                needsConsent.value = null
                 isLoading.value = false
-                return@launch
+            } catch (e: Exception) {
+                Log.e("HomeAutoVM", "Error in loadDevices", e)
+                isLoading.value = false
             }
-            needsConsent.value = null
-            isLoading.value = false
         }
         viewModelScope.launch {
             combine(repository.getDevices(), widgetConfig) { devices, config ->

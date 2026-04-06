@@ -1,6 +1,7 @@
 package de.mm20.launcher2.homeautomation
 
 import android.content.Intent
+import android.util.Log
 import de.mm20.launcher2.homeautomation.providers.GoogleHomeProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,11 +38,18 @@ internal class HomeAutomationRepositoryImpl(
     }
 
     override suspend fun refresh(): Intent? {
+        Log.d("HomeAutoRepo", "refresh() called")
         val consentIntent = googleHomeProvider.getConsentIntentIfNeeded()
+        Log.d("HomeAutoRepo", "consentIntent: $consentIntent")
         if (consentIntent != null) return consentIntent
 
-        _structures.value = googleHomeProvider.fetchStructures()
-        _devices.value = googleHomeProvider.fetchDevices()
+        val structures = googleHomeProvider.fetchStructures()
+        Log.d("HomeAutoRepo", "structures: ${structures.size}")
+        _structures.value = structures
+
+        val devices = googleHomeProvider.fetchDevices()
+        Log.d("HomeAutoRepo", "devices: ${devices.size}")
+        _devices.value = devices
         return null
     }
 }
