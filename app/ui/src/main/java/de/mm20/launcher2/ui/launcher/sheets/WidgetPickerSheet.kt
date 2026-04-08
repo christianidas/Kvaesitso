@@ -69,6 +69,7 @@ import de.mm20.launcher2.widgets.MusicWidget
 import de.mm20.launcher2.widgets.NotesWidget
 import de.mm20.launcher2.widgets.SmartSuggestionsWidget
 import de.mm20.launcher2.widgets.AgendaWidget
+import de.mm20.launcher2.widgets.HomeAutomationWidget
 import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
 import de.mm20.launcher2.widgets.Widget
@@ -361,6 +362,7 @@ fun WidgetPickerSheet(
                                 AppUsageWidget.Type -> AppUsageWidget(id)
                                 TodoWidget.Type -> TodoWidget(id)
                                 AgendaWidget.Type -> AgendaWidget(id)
+                                HomeAutomationWidget.Type -> HomeAutomationWidget(id)
                                 else -> return@OutlinedCard
                             }
                             onWidgetSelected(widget)
@@ -383,6 +385,7 @@ fun WidgetPickerSheet(
                                             AppUsageWidget.Type -> R.drawable.timer_24px
                                             TodoWidget.Type -> R.drawable.checklist_24px
                                             AgendaWidget.Type -> R.drawable.event_24px
+                                            HomeAutomationWidget.Type -> R.drawable.home_24px
                                             else -> R.drawable.widgets_24px
                                         }
                                     ),

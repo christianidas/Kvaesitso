@@ -123,6 +123,7 @@ dependencies {
     implementation(project(":core:base"))
     implementation(project(":data:calculator"))
     implementation(project(":data:calendar"))
+    implementation(project(":data:homeautomation"))
     implementation(project(":data:contacts"))
     implementation(project(":core:crashreporter"))
     implementation(project(":data:currencies"))

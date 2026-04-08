@@ -40,6 +40,7 @@ import de.mm20.launcher2.ui.launcher.widgets.appusage.AppUsageWidget
 import de.mm20.launcher2.ui.launcher.widgets.notes.NotesWidget
 import de.mm20.launcher2.ui.launcher.widgets.smartsuggestions.SmartSuggestionsWidget
 import de.mm20.launcher2.ui.launcher.widgets.agenda.AgendaWidget
+import de.mm20.launcher2.ui.launcher.widgets.homeautomation.HomeAutomationWidget
 import de.mm20.launcher2.ui.launcher.widgets.todo.TodoWidget
 import de.mm20.launcher2.ui.launcher.widgets.weather.WeatherWidget
 import de.mm20.launcher2.ui.theme.transparency.transparency
@@ -51,6 +52,7 @@ import de.mm20.launcher2.widgets.MusicWidget
 import de.mm20.launcher2.widgets.AppUsageWidget
 import de.mm20.launcher2.widgets.NotesWidget
 import de.mm20.launcher2.widgets.SmartSuggestionsWidget
+import de.mm20.launcher2.widgets.HomeAutomationWidget
 import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
 import de.mm20.launcher2.widgets.Widget
@@ -120,6 +122,7 @@ fun WidgetItem(
                             is AppUsageWidget -> stringResource(R.string.widget_name_app_usage)
                             is TodoWidget -> stringResource(R.string.widget_name_todo)
                             is AgendaWidget -> stringResource(R.string.widget_name_agenda)
+                            is HomeAutomationWidget -> stringResource(R.string.widget_name_home_automation)
                             is AppWidget -> remember(widget.config.widgetId) {
                                 appWidget?.loadLabel(
                                     context.packageManager
@@ -192,6 +195,10 @@ fun WidgetItem(
 
                     is AgendaWidget -> {
                         AgendaWidget(widget)
+                    }
+
+                    is HomeAutomationWidget -> {
+                        HomeAutomationWidget(widget)
                     }
 
                     is AppWidget -> {

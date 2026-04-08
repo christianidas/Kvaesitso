@@ -135,6 +135,7 @@ dependencies {
     implementation(project(":services:folders"))
     implementation(project(":data:weather"))
     implementation(project(":data:calendar"))
+    implementation(project(":data:homeautomation"))
     implementation(project(":services:search"))
     implementation(project(":core:preferences"))
     implementation(project(":data:applications"))

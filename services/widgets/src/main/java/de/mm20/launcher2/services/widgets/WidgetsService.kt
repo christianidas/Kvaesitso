@@ -13,6 +13,7 @@ import de.mm20.launcher2.widgets.AppUsageWidget
 import de.mm20.launcher2.widgets.NotesWidget
 import de.mm20.launcher2.widgets.SmartSuggestionsWidget
 import de.mm20.launcher2.widgets.AgendaWidget
+import de.mm20.launcher2.widgets.HomeAutomationWidget
 import de.mm20.launcher2.widgets.TodoWidget
 import de.mm20.launcher2.widgets.WeatherWidget
 import de.mm20.launcher2.widgets.Widget
@@ -89,6 +90,10 @@ class WidgetsService(
             BuiltInWidgetInfo(
                 type = AgendaWidget.Type,
                 label = context.getString(R.string.widget_name_agenda),
+            ),
+            BuiltInWidgetInfo(
+                type = HomeAutomationWidget.Type,
+                label = context.getString(R.string.widget_name_home_automation),
             ),
         )
     }
